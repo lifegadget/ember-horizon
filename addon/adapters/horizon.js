@@ -17,7 +17,7 @@ export default Adapter.extend({
                 hz(type.modelName)
                     .find(id)
                     .fetch()
-                    .subscribe(resolve, reject);
+                    .subscribe(Ember.run.bind(this, resolve), Ember.run.bind(this, reject));
             });
         });
     },
@@ -29,7 +29,7 @@ export default Adapter.extend({
             return new Ember.RSVP.Promise((resolve, reject) => {
                 hz(type.modelName)
                     .fetch()
-                    .subscribe(resolve, reject);
+                    .subscribe(Ember.run.bind(this, resolve), Ember.run.bind(this, reject));
             });
         });
     },
@@ -42,7 +42,7 @@ export default Adapter.extend({
                 hz(type.modelName)
                     .findAll(ids)
                     .fetch()
-                    .subscribe(resolve, reject);
+                    .subscribe(Ember.run.bind(this, resolve), Ember.run.bind(this, reject));
             });
         });
     },
@@ -55,7 +55,7 @@ export default Adapter.extend({
                 hz(type.modelName)
                     .findAll(query)
                     .fetch()
-                    .subscribe(resolve, reject);
+                    .subscribe(Ember.run.bind(this, resolve), Ember.run.bind(this, reject));
             });
         });
     },
@@ -68,7 +68,7 @@ export default Adapter.extend({
                 hz(type.modelName)
                     .find(query)
                     .fetch()
-                    .subscribe(resolve, reject);
+                    .subscribe(Ember.run.bind(this, resolve), Ember.run.bind(this, reject));
             });
         });
     },
@@ -81,7 +81,7 @@ export default Adapter.extend({
             return new Ember.RSVP.Promise((resolve, reject) => {
                 hz(type.modelName)
                     .store(payload)
-                    .subscribe(resolve, reject);
+                    .subscribe(Ember.run.bind(this, resolve), Ember.run.bind(this, reject));
             });
         });
     },
@@ -94,7 +94,7 @@ export default Adapter.extend({
             return new Ember.RSVP.Promise((resolve, reject) => {
                 hz(type.modelName)
                     .replace(payload)
-                    .subscribe(resolve, reject);
+                    .subscribe(Ember.run.bind(this, resolve), Ember.run.bind(this, reject));
             });
         });
     },
@@ -106,7 +106,7 @@ export default Adapter.extend({
             return new Ember.RSVP.Promise((resolve, reject) => {
                 hz(type.modelName)
                     .remove(snapshot.id)
-                    .subscribe(resolve, reject);
+                    .subscribe(Ember.run.bind(this, resolve), Ember.run.bind(this, reject));
             });
         });
     },
