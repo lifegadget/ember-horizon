@@ -9,10 +9,17 @@ export default Adapter.extend({
 
     defaultSerializer: 'json',
 
-    findRecord() {
+    findRecord(store, type, id) {
         const connectionPromise = this._getConnectionPromise();
 
-        return connectionPromise.then(() => { throw 'findRecord not implemented yet'; });
+        return connectionPromise.then((hz) => {
+            return new Ember.RSVP.Promise((resolve, reject) => {
+                hz(type.modelName)
+                    .find(id)
+                    .fetch()
+                    .subscribe(resolve, reject);
+            });
+        });
     },
 
     findAll(store, type) {
@@ -27,10 +34,17 @@ export default Adapter.extend({
         });
     },
 
-    findMany() {
+    findMany(store, type, ids) {
         const connectionPromise = this._getConnectionPromise();
 
-        return connectionPromise.then(() => { throw 'findMany not implemented yet'; });
+        return connectionPromise.then((hz) => {
+            return new Ember.RSVP.Promise((resolve, reject) => {
+                hz(type.modelName)
+                    .findAll(ids)
+                    .fetch()
+                    .subscribe(resolve, reject);
+            });
+        });
     },
 
     query(store, type, query) {
@@ -72,10 +86,17 @@ export default Adapter.extend({
         });
     },
 
-    updateRecord() {
+    updateRecord(store, type, snapshot) {
         const connectionPromise = this._getConnectionPromise();
 
-        return connectionPromise.then(() => { throw 'updateRecord not implemented yet'; });
+        return connectionPromise.then((hz) => {
+            const payload = this.serialize(snapshot, { includeId: true });
+            return new Ember.RSVP.Promise((resolve, reject) => {
+                hz(type.modelName)
+                    .replace(payload)
+                    .subscribe(resolve, reject);
+            });
+        });
     },
 
     deleteRecord(store, type, snapshot) {
