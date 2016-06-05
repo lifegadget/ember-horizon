@@ -1,7 +1,7 @@
 {
   "name": "ember-cli-horizon",
-  "version": "0.0.0",
-  "description": "The default blueprint for ember-cli addons.",
+  "version": "0.0.1",
+  "description": "An Ember service for managing a Horizon connection, and an adapter to request data from that connection.",
   "directories": {
     "doc": "doc",
     "test": "tests"
@@ -11,11 +11,14 @@
     "start": "ember server",
     "test": "ember try:testall"
   },
-  "repository": "",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jonesetc/ember-cli-horizon.git"
+  },
   "engines": {
     "node": ">= 0.10.0"
   },
-  "author": "",
+  "author": "Kyle Jones <kyle@jonesetc.com>",
   "license": "MIT",
   "devDependencies": {
     "@horizon/client": "^1.0.3",
@@ -45,7 +48,12 @@
     "utf-8-validate": "^1.2.1"
   },
   "keywords": [
-    "ember-addon"
+    "ember-addon",
+    "ember-data",
+    "horizon",
+    "rethinkdb",
+    "ember-service",
+    "ember-data-adapter"
   ],
   "dependencies": {
     "ember-cli-babel": "^5.1.6"

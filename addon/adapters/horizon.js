@@ -1,12 +1,25 @@
 import Ember from 'ember';
 import Adapter from 'ember-data/adapter';
 
+/**
+ * @class HorizonAdapter
+ *
+ * This adapter uses Horizon's fetch (non-streaming) interface.
+ */
 export default Adapter.extend({
     _hzService: Ember.inject.service('horizon-connection'),
+
+    /**
+     * @method _getConnectionPromise
+     * @private
+     *
+     * Simple helper method to make sure horizon is connected and get the conn.
+     */
     _getConnectionPromise() {
         return this.get('_hzService').connect();
     },
 
+    // Horizon returns objects as plain JSON.
     defaultSerializer: 'json',
 
     findRecord(store, type, id) {
