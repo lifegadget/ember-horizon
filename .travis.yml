@@ -38,7 +38,7 @@ before_install:
   - sudo apt-get install rethinkdb
   - export PATH=/usr/local/phantomjs-2.0.0/bin:$PATH
   - "npm config set spin false"
-  - "npm install -g npm@^2"
+  # - "npm install -g npm@^2"
 
 install:
   - npm install -g bower
