@@ -1,5 +1,8 @@
 # Ember-cli-horizon
 
+[![npm](https://img.shields.io/npm/v/ember-cli-horizon.svg)](https://www.npmjs.com/package/ember-cli-horizon)
+[![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/jonesetc/ember-cli-horizon/master/LICENSE.md)
+
 An Ember service for managing a Horizon connection, and an adapter to request data from that connection.
 
 ## Installation
