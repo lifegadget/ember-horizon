@@ -18,6 +18,20 @@
   "engines": {
     "node": ">= 0.10.0"
   },
+  "files": [
+    "ember-cli-build.js",
+    "LICENSE.md",
+    "README.md",
+    "addon",
+    "blueprints",
+    "app",
+    "lib",
+    "bower.json",
+    "index.js",
+    "package.json",
+    "testem.json",
+    "vendor"
+  ],
   "author": "Kyle Jones <kyle@jonesetc.com>",
   "license": "MIT",
   "devDependencies": {
