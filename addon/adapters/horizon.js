@@ -6,7 +6,10 @@ const { RSVP: {Promise}, get, inject: {service}, typeOf } = Ember;
 /**
  * @class HorizonAdapter
  *
- * This adapter uses Horizon's fetch (non-streaming) interface.
+ * This adapter integrates with a Horizon/RethinkDB stack; it provides
+ * normal CRUD operations by default and can provide real-time updates
+ * if the application chooses to use the services "watch" services for one,
+ * many, or all collections.
  */
 export default Adapter.extend({
     horizon: service(),

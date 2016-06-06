@@ -3,6 +3,8 @@ import config from 'ember-get-config';
 import horizon from 'npm:@horizon/client/dist/horizon';
 
 // The horizon object with configuration from users ENV
+// Note: often the DEV environment will be left blank
+// and rather than just let it
 const hzConfig = config.horizon || {};
 const hz = horizon(hzConfig);
 

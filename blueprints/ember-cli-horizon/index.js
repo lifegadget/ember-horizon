@@ -1,4 +1,6 @@
 /*jshint node:true*/
+var chalk = require('chalk');
+
 module.exports = {
   description: 'ember-cli-horizon blueprint',
   normalizeEntityName: function() {
