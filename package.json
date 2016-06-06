@@ -1,6 +1,6 @@
 {
   "name": "ember-cli-horizon",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "An Ember service for managing a Horizon connection, and an adapter to request data from that connection.",
   "directories": {
     "doc": "doc",
@@ -56,6 +56,7 @@
     "ember-data-adapter"
   ],
   "dependencies": {
+    "chalk": "^1.1.3",
     "ember-cli-babel": "^5.1.6"
   },
   "ember-addon": {

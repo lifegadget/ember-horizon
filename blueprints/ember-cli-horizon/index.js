@@ -1,6 +1,6 @@
 /*jshint node:true*/
 module.exports = {
-  description: 'Default blueprint to be run after install.',
+  description: 'ember-cli-horizon blueprint',
   normalizeEntityName: function() {
     // this prevents an error when the entityName is not specified
 	},
@@ -10,6 +10,15 @@ module.exports = {
       { name: 'bufferutil', target: '^1.2.1'  },
       { name: 'utf-8-validate', target: '^1.2.1' },
       { name: 'ember-browserify', target: '^1.1.9' }
-    ]);
-  }
+    ]).then(function() {
+      console.log(chalk.green.bold('ember-cli-horizon') + ' has been installed.');
+      console.log('  - in order to use this you will need to install the Horizon server,');
+      console.log('    you can find more information here: ' + chalk.blue.underline('http://horizon.io/install/'));
+      console.log();
+      console.log('In development mode you can serve both Horizon server and Ember\'s "serve" by');
+      console.log('using the ' + chalk.bold('ember horizon:serve') + ' command.');
+      console.log();
+      return Promise.resolve();
+    });
+  },
 };

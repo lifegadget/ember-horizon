@@ -43,7 +43,7 @@ export default Ember.Service.extend({
         hz.onReady(() => {
           this._statusObservable();
           this._currentUserObservable();
-          debug('horizon client connected to backend');
+          debug('horizon client connected');
           resolve();
         });
         hz.onDisconnected(() => {
