@@ -22,35 +22,68 @@ export default Adapter.extend({
     // Horizon returns objects as plain JSON.
     defaultSerializer: 'json',
 
-    findRecord(store, type, id) {
+    findRecord() {
         return Ember.RSVP.Promise.reject('findRecord not implemented yet');
     },
 
     findAll(store, type) {
-        return Ember.RSVP.Promise.reject('findAll not implemented yet');
+        return this._getConnectionPromise().then((hz) => {
+            return new Ember.RSVP.Promise((resolve, reject) => {
+                const initialData = [];
+                hz(type.modelName)
+                    .watch({ rawChanges: true })
+                    .subscribe(Ember.run.bind(this, data => {
+                        if (data.type === 'state' && data.state === 'synced') {
+                            resolve(initialData);
+                        } else if (data.type === 'initial') {
+                            initialData.push(data.new_val);
+                        }
+                    }), Ember.run.bind(this, reject));
+            });
+        });
     },
 
-    findMany(store, type, ids) {
+    findMany() {
         return Ember.RSVP.Promise.reject('findMany not implemented yet');
     },
 
-    query(store, type, query) {
+    query() {
         return Ember.RSVP.Promise.reject('query not implemented yet');
     },
 
-    queryRecord(store, type, query) {
+    queryRecord() {
         return Ember.RSVP.Promise.reject('queryRecord not implemented yet');
     },
 
     createRecord(store, type, snapshot) {
-        return Ember.RSVP.Promise.reject('createRecord not implemented yet');
+        return this._getConnectionPromise().then((hz) => {
+            const payload = this.serialize(snapshot);
+            return new Ember.RSVP.Promise((resolve, reject) => {
+                hz(type.modelName)
+                    .store(payload)
+                    .subscribe(Ember.run.bind(this, resolve), Ember.run.bind(this, reject));
+            });
+        });
     },
 
     updateRecord(store, type, snapshot) {
-        return Ember.RSVP.Promise.reject('updateRecord not implemented yet');
+        return this._getConnectionPromise().then((hz) => {
+            const payload = this.serialize(snapshot, { includeId: true });
+            return new Ember.RSVP.Promise((resolve, reject) => {
+                hz(type.modelName)
+                    .replace(payload)
+                    .subscribe(Ember.run.bind(this, resolve), Ember.run.bind(this, reject));
+            });
+        });
     },
 
     deleteRecord(store, type, snapshot) {
-        return Ember.RSVP.Promise.reject('deleteRecord not implemented yet');
+        return this._getConnectionPromise().then((hz) => {
+            return new Ember.RSVP.Promise((resolve, reject) => {
+                hz(type.modelName)
+                    .remove(snapshot.id)
+                    .subscribe(Ember.run.bind(this, resolve), Ember.run.bind(this, reject));
+            });
+        });
     },
 });
