@@ -8,8 +8,9 @@ import horizon from 'npm:@horizon/client/dist/horizon';
 const hzConfig = config.horizon || {};
 const hz = horizon(hzConfig);
 
-const { RSVP: {Promise}, debug, get, typeOf } = Ember;
+const { RSVP: {Promise}, debug, get, typeOf, inject: {service} } = Ember;
 const a = Ember.A;
+const pascalize = thingy => thingy ? Ember.String.capitalize(Ember.String.camelize(thingy)) : thingy;
 
 /**
  * @class Horizon
@@ -17,13 +18,16 @@ const a = Ember.A;
  * Service methods for interacting with Horizon
  */
 export default Ember.Service.extend({
+  store: service(),
+
   init() {
     this._super(...arguments);
     this._collections = []; // TODO: check whether Horizon does collection caching for you
     this._subscriptions = [];
     this._watching = [];
+    this._registeredWatchers = [];
   },
-  willDestroyElement() {
+  willDestroy() {
     this._watching.forEach(s => s.unsubscribe());
     this._subscriptions.forEach(s => s.unsubscribe()); // TODO: understand lifecycle better
     hz.disconnect();
@@ -32,7 +36,7 @@ export default Ember.Service.extend({
   currentUser: null,  // set by Horizon Observable
   status: 'init',     // set by Horizon Observable
   hasAuthToken: null, // set by Horizon Observable
-  raw: false,         // Horizon default; specifies detail/structure in watched changes
+  raw: true,          // specifies detail/structure in watched changes (true = RethinkDB changestream)
 
   connect() {
     return new Promise((resolve, reject) => {
@@ -90,7 +94,55 @@ export default Ember.Service.extend({
    * @return {Observable}          RxJS observable object
    */
   watch(collection, options = {}) {
-    // TODO: implment
+    const raw = options.raw || get(this, 'raw');
+    const callback = changes => {
+      const collection = collection;
+      const since = new Date();
+      const isRaw = raw;
+      this._watchedChange({
+        changes: changes,
+        collection: collection,
+        isRaw: isRaw,
+        watchedSince: since
+      });
+    };
+
+    return new Promise((resolve, reject) => {
+
+      this.collection(collection)
+        .then(c => c.watch({rawChanges: raw}).subscribe(callback))
+        .catch(reject);
+
+    }); // return promise
+  },
+
+  /**
+   * Allows the application to register a callback in either one or all
+   * collections when a "watch" detects a change. In most cases you would state a
+   * function but you can also pass a string value of a known named callback. Currently
+   * the only named callback is 'ember-data' which will add the change to ED's store.
+   *
+   * @param  {Function}   cb            the callback function to call when changes are detected
+   * @param  {string}     collection    either the name of the collection or "all"; defaults to "all"
+   * @return {void}
+   */
+  registerCallback(cb, collection = 'all') {
+    const namedCallbacks = a(['ember-data']);
+    if(typeOf(cb) === 'function') {
+      this._registeredWatchers.push({
+        collection: collection,
+        callback: cb
+      });
+    }
+    else if(typeOf(cb) === 'string' && namedCallbacks.contains(cb)) {
+      this._registeredWatchers.push({
+        collection: collection,
+        callback: this[`_changes${pascalize(cb)}`].bind(this)
+      });
+    }
+    else {
+      console.error(`Not able to register watcher callback for collection "${collection}"`);
+    }
   },
 
   /**
@@ -110,11 +162,69 @@ export default Ember.Service.extend({
   },
 
   findAll(collection, filterBy) {
+    console.log('findAll', collection, filterBy);
+  },
+
+  subscribe(input) {
+    return collection.subscribe(input);
+  },
+
+  /**
+   * Called whenever a change is detected by one of the watched
+   * collections. It then calls any registered callbacks that have
+   * expressed interest via the "registerCallback" function
+   *
+   * @param  {hash} meta includes "changes", "connection", and other meta properties
+   * @return {void}
+   */
+  _watchedChange(meta) {
+    console.log('change detected:', meta);
+    this._registeredWatchers.forEach(w => {
+      if(w.collection === 'all' || w.collection === meta.collection) {
+        w.callback(meta);
+      }
+    });
 
   },
 
+  _changesEmberData(meta) {
+    const store = this.get('store');
+    console.log('ember-data change handler', meta);
+    const add = (collection, object) => {
+      store.pushPayload({[collection]: object});
+    };
+    const change = (collection, id, object) => {
 
+    };
+    const delete = (collection, id) => {
+      store.findRecord(collection, id).then(record => {
+        record.destroyRecord();
+        record.save();
+      });
+    };
 
+    meta.changes.forEach(c => {
+      switch(c.type) {
+        case "add":
+          add(meta.collection, c.new_val);
+          break;
+        case "change":
+          change(meta.collection, c.old_value.id, c.new_value);
+          break;
+        case "delete":
+          // TODO: need to ensure "delete" is correct type passed in and also how the ID is conveyed.
+          delete(meta.collection, c.id);
+          break;
+        case "sync":
+          debug('database state was synched');
+          break;
+
+        default:
+          debug(`Unknown type "${c.type}" reported by watch observable`);
+
+      }
+    });
+  },
 
   _statusObservable() {
     hz.status().watch().subscribe( status => {
