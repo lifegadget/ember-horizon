@@ -23,9 +23,7 @@ export default Adapter.extend({
     defaultSerializer: 'json',
 
     findRecord(store, type, id) {
-        const connectionPromise = this._getConnectionPromise();
-
-        return connectionPromise.then((hz) => {
+        return this._getConnectionPromise().then((hz) => {
             return new Ember.RSVP.Promise((resolve, reject) => {
                 hz(type.modelName)
                     .find(id)
@@ -36,9 +34,7 @@ export default Adapter.extend({
     },
 
     findAll(store, type) {
-        const connectionPromise = this._getConnectionPromise();
-
-        return connectionPromise.then((hz) => {
+        return this._getConnectionPromise().then((hz) => {
             return new Ember.RSVP.Promise((resolve, reject) => {
                 hz(type.modelName)
                     .fetch()
@@ -48,9 +44,7 @@ export default Adapter.extend({
     },
 
     findMany(store, type, ids) {
-        const connectionPromise = this._getConnectionPromise();
-
-        return connectionPromise.then((hz) => {
+        return this._getConnectionPromise().then((hz) => {
             return new Ember.RSVP.Promise((resolve, reject) => {
                 hz(type.modelName)
                     .findAll(ids)
@@ -61,9 +55,7 @@ export default Adapter.extend({
     },
 
     query(store, type, query) {
-        const connectionPromise = this._getConnectionPromise();
-
-        return connectionPromise.then((hz) => {
+        return this._getConnectionPromise().then((hz) => {
             return new Ember.RSVP.Promise((resolve, reject) => {
                 hz(type.modelName)
                     .findAll(query)
@@ -74,9 +66,7 @@ export default Adapter.extend({
     },
 
     queryRecord(store, type, query) {
-        const connectionPromise = this._getConnectionPromise();
-
-        return connectionPromise.then((hz) => {
+        return this._getConnectionPromise().then((hz) => {
             return new Ember.RSVP.Promise((resolve, reject) => {
                 hz(type.modelName)
                     .find(query)
@@ -87,9 +77,7 @@ export default Adapter.extend({
     },
 
     createRecord(store, type, snapshot) {
-        const connectionPromise = this._getConnectionPromise();
-
-        return connectionPromise.then((hz) => {
+        return this._getConnectionPromise().then((hz) => {
             const payload = this.serialize(snapshot);
             return new Ember.RSVP.Promise((resolve, reject) => {
                 hz(type.modelName)
@@ -100,9 +88,7 @@ export default Adapter.extend({
     },
 
     updateRecord(store, type, snapshot) {
-        const connectionPromise = this._getConnectionPromise();
-
-        return connectionPromise.then((hz) => {
+        return this._getConnectionPromise().then((hz) => {
             const payload = this.serialize(snapshot, { includeId: true });
             return new Ember.RSVP.Promise((resolve, reject) => {
                 hz(type.modelName)
@@ -113,9 +99,7 @@ export default Adapter.extend({
     },
 
     deleteRecord(store, type, snapshot) {
-        const connectionPromise = this._getConnectionPromise();
-
-        return connectionPromise.then((hz) => {
+        return this._getConnectionPromise().then((hz) => {
             return new Ember.RSVP.Promise((resolve, reject) => {
                 hz(type.modelName)
                     .remove(snapshot.id)
