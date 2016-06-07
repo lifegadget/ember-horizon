@@ -5,3 +5,7 @@
   font-size: 2em;
   cursor: pointer;
 }
+
+.mute-text {
+  color: darkgrey;
+}

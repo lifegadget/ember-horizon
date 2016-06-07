@@ -1,1 +1,42 @@
-{{outlet}}
+<h2>TODO's</h2>
+
+<table>
+  {{#each model as |todo|}}
+    <tr>
+      <td>
+        {{todo.name}}
+      </td>
+      <td>
+        {{todo.due}}
+      </td>
+      <td>
+        {{todo.ownedBy}}
+      </td>
+    </tr>
+  {{/each}}
+</table>
+<p>
+  <br>
+</p>
+<h3>Add TODO</h3>
+<form onsubmit={{route-action 'addTodo' }}>
+  <table>
+      <tr>
+        <th>Name / Description</th>
+        <th>Due</th>
+        <th>Owned By</th>
+      </tr>
+      <tr>
+        <td>
+          <input id='todo-name' type="text"  name="name" />
+        </td>
+        <td>
+          <input id='todo-date' type="date" name="due" />
+        </td>
+        <td>
+          {{user-select value=ownedBy}}
+        </td>
+      </tr>
+  </table>
+  <button type="button" name="button">Add</button>
+</form>

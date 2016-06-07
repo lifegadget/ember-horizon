@@ -13,6 +13,7 @@ export default Ember.Route.extend({
       if(userName) {
         console.log(`adding user "${userName}"`);
         this.store.createRecord('person', {name: userName}).save();
+        Ember.$('#addUser').val('');
       } else {
         console.warn('There was no user name to add!');
       }

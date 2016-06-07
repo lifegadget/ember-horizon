@@ -9,11 +9,12 @@
     <span class="name">{{p.name}}</span>
     <span class="ownedBy">
       {{#if p.owns}}
+        - owns:
         {{#each p.owns as |todo|}}
-          <span class="person-todo">{{todo.name}}</span>
+          <span class="person-todo">{{todo.name}}, </span>
         {{/each}}
       {{else}}
-        (doesn't own any TODO's)
+        <span class="mute-text">(doesn't own any TODO's)</span>
       {{/if}}
       {{p.ownedBy.name}}
     </span>
@@ -27,7 +28,7 @@
 </p>
 <h3>Add Person</h3>
 <p>
-  <form class="adding">
+  <form class="user-form">
     <input id='addUser' type='text' name='name' />
     <button onclick={{route-action 'addUser'}}> Add </button>
   </form>
