@@ -19,11 +19,10 @@ export default Adapter.extend({
 
   findRecord(store, type, id) {
     const horizon = get(this, 'horizon');
-    const subscription = horizon.getSubscription(type);
     return new Promise((resolve, reject) => {
 
       // If subscription exists we assume record already up-to-date
-      if(subscription) {
+      if(horizon.isWatched(type)) {
         resolve( this.peekRecord(type.modelName, id) );
       } else {
         horizon.collection(type)
@@ -39,11 +38,9 @@ export default Adapter.extend({
 
   findAll(store, type) {
     const horizon = get(this, 'horizon');
-    const subscription = horizon.getSubscription(type);
     return new Promise((resolve, reject) => {
 
-      // If subscription exists we assume record already up-to-date
-      if(subscription) {
+      if (horizon.isWatched(type)) {
         resolve( this.peekAll(type.modelName) );
       } else {
         horizon.collection(type)
@@ -59,11 +56,9 @@ export default Adapter.extend({
 
   findMany(store, type, ids) {
     const horizon = get(this, 'horizon');
-    const subscription = horizon.getSubscription(type);
     return new Promise((resolve, reject) => {
 
-      // If subscription exists we assume record already up-to-date
-      if(subscription) {
+      if (horizon.isWatched(type)) {
         resolve( this.peekAll(type.modelName, ids) );
       } else {
         horizon.collection(type)
@@ -79,11 +74,9 @@ export default Adapter.extend({
 
   query(store, type, query) {
     const horizon = get(this, 'horizon');
-    const subscription = horizon.getSubscription(type);
     return new Promise((resolve, reject) => {
 
-      // If subscription exists we assume record already up-to-date
-      if(subscription) {
+      if (horizon.isWatched(type)) {
         resolve( this.peekAll(type.modelName, query) );
       } else {
         horizon.collection(type)
@@ -99,11 +92,9 @@ export default Adapter.extend({
 
   queryRecord(store, type, query) {
     const horizon = get(this, 'horizon');
-    const subscription = horizon.getSubscription(type);
     return new Promise((resolve, reject) => {
 
-      // If subscription exists we assume record already up-to-date
-      if(subscription) {
+      if (horizon.isWatched(type)) {
         resolve( this.peekAll(type.modelName, query) ); // TODO: this may not work with query
       } else {
         horizon.collection(type)

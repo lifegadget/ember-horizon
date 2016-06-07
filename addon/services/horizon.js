@@ -1,12 +1,11 @@
 import Ember from 'ember';
 import config from 'ember-get-config';
-import horizon from 'npm:@horizon/client/dist/horizon';
 
 // The horizon object with configuration from users ENV
 // Note: often the DEV environment will be left blank
 // and rather than just let it
 const hzConfig = config.horizon || {};
-const hz = horizon(hzConfig);
+const hz = window.Horizon(hzConfig);
 
 const { RSVP: {Promise}, debug, get, typeOf, inject: {service} } = Ember;
 const a = Ember.A;
@@ -83,6 +82,18 @@ export default Ember.Service.extend({
         .catch(reject);
 
     }); // return promise
+  },
+
+  /**
+   * Given a collection (or collection query), it returns whether a watcher is
+   * keeping the collection up-to-date in real-time
+   *
+   * @param  {Mixed}    type   Can be a string name or the adapter's "type" object
+   * @return {Boolean}
+   */
+  isWatched(type) {
+    // TODO: implement
+    return false;
   },
 
   /**
