@@ -17,11 +17,13 @@ const pascalize = thingy => thingy ? Ember.String.capitalize(Ember.String.cameli
  * Service methods for interacting with Horizon
  */
 export default Ember.Service.extend({
+  // Ember-data
+  eds: service('store'),
   // Observable members
-  currentUser: null,  // set by Horizon Observable
-  status: 'init',     // set by Horizon Observable
-  hasAuthToken: null, // set by Horizon Observable
-  raw: true,          // specifies detail/structure in watched changes (true = RethinkDB changestream)
+  currentUser: null,    // set by Horizon Observable
+  status: 'unconnected',// set by Horizon Observable
+  hasAuthToken: null,   // set by Horizon Observable
+  raw: true,            // specifies detail/structure in watched changes (true = RethinkDB changestream)
 
   init() {
     this._super(...arguments);
@@ -42,12 +44,13 @@ export default Ember.Service.extend({
     return new Promise((resolve, reject) => {
 
       const status = get(this, 'status');
-      if(status === 'connected') {
+      if(status === 'ready') {
         resolve();
       } else {
         hz.connect();
         debug('Connecting to Horizon ...');
         hz.onReady(() => {
+          this.set('status', 'ready');
           debug('Horizon connected');
           this._statusObservable();
           this._currentUserObservable();
@@ -174,7 +177,6 @@ export default Ember.Service.extend({
     return new Promise((resolve, reject) => {
 
       if (filterBy) {
-        console.log('finding');
         return resolve(collection.find(filterBy));
       } else {
         reject({code: "find-requires-filter-by"});
@@ -190,7 +192,6 @@ export default Ember.Service.extend({
     return new Promise((resolve, reject) => {
 
       if (filterBy) {
-        console.log('finding: ', query);
         return resolve(collection.findAll(...query));
       } else {
         reject({code: "find-requires-filter-by"});
@@ -202,7 +203,6 @@ export default Ember.Service.extend({
   fetch(obj) {
     return new Promise((resolve, reject) => {
 
-      console.log('fetching', obj);
       obj.fetch().subscribe(
         result => resolve(result),
         err => reject(err)
@@ -216,8 +216,6 @@ export default Ember.Service.extend({
 
       collection.store(payload).subscribe(
         result => {
-          console.log('id: ', result);
-          console.log('payload: ', payload);
           resolve(Ember.assign(payload, result));
         },
         err => reject(err)
@@ -305,15 +303,37 @@ export default Ember.Service.extend({
     });
   },
 
+  _disconnected() {
+    this.set('status', 'disconnected');
+    debug('horizon is disconnected');
+    this._retryConnection();
+  },
+
+  _socketError() {
+    this.set('status', 'error');
+    debug('horizon is in an error state');
+    this._retryConnection();
+  },
+
+  _retryConnection() {
+    const delays = [1000, 5000, 15000, 60000];
+    delays.forEach(delay => {
+      Ember.run.later(() => {
+        if (this.get('status') !== 'ready') {
+          this.connect();
+        }
+      }, delay);
+    });
+  },
+
+
   _statusObservable() {
-    console.log('_statusObservable');
-    // hz.status().watch().subscribe( updated => {
-    //   console.log('status changed');
+    // window.Horizon.status().watch().subscribe( updated => {
+    //   console.log('status changed', updated);
     //   this.set('status', updated);
     // });
   },
   _currentUserObservable() {
-    console.log('_currentUserObservable');
     // hz.currentUser().watch().subscribe( user => {
     //   this.set('currentUser', user);
     // });
