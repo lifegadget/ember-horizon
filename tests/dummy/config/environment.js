@@ -19,7 +19,7 @@ module.exports = function(environment) {
     },
 
     horizon: {
-      host: 'localhost:8181'
+      host: 'localhost:44200',
     }
   };
 
