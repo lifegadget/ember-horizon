@@ -18,7 +18,14 @@ const pascalize = thingy => thingy ? Ember.String.capitalize(Ember.String.cameli
  * Service methods for interacting with Horizon
  */
 export default Ember.Service.extend({
+  // Services
   store: service(),
+
+  // Observable members
+  currentUser: null,  // set by Horizon Observable
+  status: 'init',     // set by Horizon Observable
+  hasAuthToken: null, // set by Horizon Observable
+  raw: true,          // specifies detail/structure in watched changes (true = RethinkDB changestream)
 
   init() {
     this._super(...arguments);
@@ -27,16 +34,13 @@ export default Ember.Service.extend({
     this._watching = [];
     this._registeredWatchers = [];
   },
+
   willDestroy() {
     this._watching.forEach(s => s.unsubscribe());
     this._subscriptions.forEach(s => s.unsubscribe()); // TODO: understand lifecycle better
     hz.disconnect();
+    this._super(...arguments);
   },
-
-  currentUser: null,  // set by Horizon Observable
-  status: 'init',     // set by Horizon Observable
-  hasAuthToken: null, // set by Horizon Observable
-  raw: true,          // specifies detail/structure in watched changes (true = RethinkDB changestream)
 
   connect() {
     return new Promise((resolve, reject) => {

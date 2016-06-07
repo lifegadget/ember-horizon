@@ -1,89 +1,160 @@
 import Ember from 'ember';
 import Adapter from 'ember-data/adapter';
 
+const { RSVP: {Promise}, get, inject: {service}, typeOf } = Ember;
+
 /**
  * @class HorizonWatchAdapter
  *
- * This adapter uses Horizon's watch (streaming) interface.
+ * This adapter integrates with a Horizon/RethinkDB stack; it provides
+ * normal CRUD operations by default and can provide real-time updates
+ * if the application chooses to use the services "watch" services for one,
+ * many, or all collections.
  */
 export default Adapter.extend({
-  _hzService: Ember.inject.service('horizon-connection'),
-
-  /**
-   * @method _getConnectionPromise
-   * @private
-   *
-   * Simple helper method to make sure horizon is connected and get the conn.
-   */
-  _getConnectionPromise() {
-    return this.get('_hzService').connect();
-  },
+  horizon: service(),
 
   // Horizon returns objects as plain JSON.
   defaultSerializer: 'json',
 
-  findRecord() {
-    return Ember.RSVP.Promise.reject('findRecord not implemented yet');
+  findRecord(store, type, id) {
+    const horizon = get(this, 'horizon');
+    const subscription = horizon.getSubscription(type);
+    return new Promise((resolve, reject) => {
+
+      // If subscription exists we assume record already up-to-date
+      if(subscription) {
+        resolve( this.peekRecord(type.modelName, id) );
+      } else {
+        horizon.collection(type)
+          .then(c => horizon.find(c, id))
+          .then(horizon.fetch)
+          .then(horizon.subscribe)
+          .then(resolve)
+          .catch(reject);
+      }
+
+    }); // return promise
   },
 
   findAll(store, type) {
-    return this._getConnectionPromise().then((hz) => {
-      return new Ember.RSVP.Promise((resolve, reject) => {
-        const initialData = [];
-        hz(type.modelName)
-          .watch({ rawChanges: true })
-          .subscribe(Ember.run.bind(this, data => {
-            if (data.type === 'state' && data.state === 'synced') {
-              resolve(initialData);
-            } else if (data.type === 'initial') {
-              initialData.push(data.new_val);
-            }
-          }), Ember.run.bind(this, reject));
-      });
-    });
+    const horizon = get(this, 'horizon');
+    const subscription = horizon.getSubscription(type);
+    return new Promise((resolve, reject) => {
+
+      // If subscription exists we assume record already up-to-date
+      if(subscription) {
+        resolve( this.peekAll(type.modelName) );
+      } else {
+        horizon.collection(type)
+          .then(horizon.findAll)
+          .then(horizon.fetch)
+          .then(horizon.subscribe)
+          .then(resolve)
+          .catch(reject);
+      }
+
+    }); // return promise
   },
 
-  findMany() {
-    return Ember.RSVP.Promise.reject('findMany not implemented yet');
+  findMany(store, type, ids) {
+    const horizon = get(this, 'horizon');
+    const subscription = horizon.getSubscription(type);
+    return new Promise((resolve, reject) => {
+
+      // If subscription exists we assume record already up-to-date
+      if(subscription) {
+        resolve( this.peekAll(type.modelName, ids) );
+      } else {
+        horizon.collection(type)
+          .then(c => horizon.findAll(c, ids))
+          .then(horizon.fetch)
+          .then(horizon.subscribe)
+          .then(resolve)
+          .catch(reject);
+      }
+
+    }); // return promise
   },
 
-  query() {
-    return Ember.RSVP.Promise.reject('query not implemented yet');
+  query(store, type, query) {
+    const horizon = get(this, 'horizon');
+    const subscription = horizon.getSubscription(type);
+    return new Promise((resolve, reject) => {
+
+      // If subscription exists we assume record already up-to-date
+      if(subscription) {
+        resolve( this.peekAll(type.modelName, query) );
+      } else {
+        horizon.collection(type)
+          .then(c => horizon.findAll(c, query))
+          .then(horizon.fetch)
+          .then(horizon.subscribe)
+          .then(resolve)
+          .catch(reject);
+      }
+
+    }); // return promise
   },
 
-  queryRecord() {
-    return Ember.RSVP.Promise.reject('queryRecord not implemented yet');
+  queryRecord(store, type, query) {
+    const horizon = get(this, 'horizon');
+    const subscription = horizon.getSubscription(type);
+    return new Promise((resolve, reject) => {
+
+      // If subscription exists we assume record already up-to-date
+      if(subscription) {
+        resolve( this.peekAll(type.modelName, query) ); // TODO: this may not work with query
+      } else {
+        horizon.collection(type)
+          .then(c => horizon.find(c, query))
+          .then(horizon.fetch)
+          .then(horizon.subscribe)
+          .then(resolve)
+          .catch(reject);
+      }
+
+    }); // return promise
   },
 
   createRecord(store, type, snapshot) {
-    return this._getConnectionPromise().then((hz) => {
-      const payload = this.serialize(snapshot);
-      return new Ember.RSVP.Promise((resolve, reject) => {
-        hz(type.modelName)
-          .store(payload)
-          .subscribe(Ember.run.bind(this, resolve), Ember.run.bind(this, reject));
-      });
-    });
+    const horizon = get(this, 'horizon');
+    const payload = this.serialize(snapshot);
+    return new Promise((resolve, reject) => {
+
+      horizon.collection(type)
+        .then(c => horizon.store(c, payload))
+        .then(horizon.subscribe)
+        .then(resolve)
+        .catch(reject);
+
+    }); // return promise
   },
 
   updateRecord(store, type, snapshot) {
-    return this._getConnectionPromise().then((hz) => {
-      const payload = this.serialize(snapshot, { includeId: true });
-      return new Ember.RSVP.Promise((resolve, reject) => {
-        hz(type.modelName)
-          .replace(payload)
-          .subscribe(Ember.run.bind(this, resolve), Ember.run.bind(this, reject));
-      });
-    });
+    const horizon = get(this, 'horizon');
+    const payload = this.serialize(snapshot, { includeId: true });
+    return new Promise((resolve, reject) => {
+
+      horizon.collection(type)
+        .then(c => horizon.replace(c, payload))
+        .then(horizon.subscribe)
+        .then(resolve)
+        .catch(reject);
+
+    }); // return promise
   },
 
   deleteRecord(store, type, snapshot) {
-    return this._getConnectionPromise().then((hz) => {
-      return new Ember.RSVP.Promise((resolve, reject) => {
-        hz(type.modelName)
-          .remove(snapshot.id)
-          .subscribe(Ember.run.bind(this, resolve), Ember.run.bind(this, reject));
-      });
-    });
+    const horizon = get(this, 'horizon');
+    const id = typeOf(snapshot) === 'class' ? snapshot.id : snapshot;
+    return new Promise((resolve, reject) => {
+
+      horizon.collection(type)
+        .then(c => horizon.remove(c, id))
+        .then(resolve)
+        .catch(reject);
+
+    }); // return promise
   },
 });
