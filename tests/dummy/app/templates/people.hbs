@@ -3,7 +3,7 @@
 <ul>
   {{#each model as |p|}}
   <li class='people'>
-    <span class="remove" onclick={{route-action 'deleteUser'}}>
+    <span class="remove" onclick={{route-action 'deleteUser' p.id}}>
       ⊗
     </span>
     <span class="name">{{p.name}}</span>

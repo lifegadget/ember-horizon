@@ -16,6 +16,10 @@ export default Ember.Route.extend({
       } else {
         console.warn('There was no user name to add!');
       }
+    },
+    deleteUser(id) {
+      console.log(`deleting user ${id}`);
+      this.store.findRecord('person', id).then(person => person.destroyRecord());
     }
   }
 });

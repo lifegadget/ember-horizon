@@ -171,12 +171,16 @@ export default Ember.Service.extend({
    * @return {[type]}            [description]
    */
   find(collection, filterBy) {
-    if (filterBy) {
-      console.log('finding');
-      return Promise.resolve(collection.find(filterBy));
-    } else {
-      return Promise.reject({code: "find-requires-filter-by"});
-    }
+    return new Promise((resolve, reject) => {
+
+      if (filterBy) {
+        console.log('finding');
+        return resolve(collection.find(filterBy));
+      } else {
+        reject({code: "find-requires-filter-by"});
+      }
+
+    }); // return promise
   },
 
   fetch(obj) {
@@ -217,6 +221,18 @@ export default Ember.Service.extend({
 
     });
   },
+
+  remove(collection, id) {
+    return new Promise((resolve, reject) => {
+
+      collection.remove(id).subscribe(
+        () => resolve(),
+        err => reject(err)
+      );
+
+    }); // return promise
+  },
+
 
   /**
    * Called whenever a change is detected by one of the watched

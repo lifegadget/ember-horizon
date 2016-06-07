@@ -48,6 +48,7 @@ export default Adapter.extend({
           .then(resolve)
           .catch(err => {
             console.error('problems with findAll', err);
+            reject(err);
           });
       }
 
@@ -136,7 +137,8 @@ export default Adapter.extend({
 
   deleteRecord(store, type, snapshot) {
     const horizon = get(this, 'horizon');
-    const id = typeOf(snapshot) === 'class' ? snapshot.id : snapshot;
+    const id = typeOf(snapshot) === 'object' ? snapshot.id : snapshot;
+    console.log(`preparing to delete ${id}`);
     return new Promise((resolve, reject) => {
 
       horizon.collection(type)
