@@ -4,7 +4,7 @@ import Adapter from 'ember-data/adapter';
 const { RSVP: {Promise}, get, inject: {service}, typeOf } = Ember;
 
 /**
- * @class HorizonAdapter
+ * @class HorizonFetchAdapter
  *
  * This adapter integrates with a Horizon/RethinkDB stack; it provides
  * normal CRUD operations by default and can provide real-time updates

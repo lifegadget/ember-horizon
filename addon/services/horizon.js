@@ -193,10 +193,10 @@ export default Ember.Service.extend({
     const add = (collection, object) => {
       store.pushPayload({[collection]: object});
     };
-    const change = (collection, id, object) => {
+    const change = (/*collection, id, object*/) => {
 
     };
-    const delete = (collection, id) => {
+    const remove = (collection, id) => {
       store.findRecord(collection, id).then(record => {
         record.destroyRecord();
         record.save();
@@ -213,15 +213,13 @@ export default Ember.Service.extend({
           break;
         case "delete":
           // TODO: need to ensure "delete" is correct type passed in and also how the ID is conveyed.
-          delete(meta.collection, c.id);
+          remove(meta.collection, c.id);
           break;
         case "sync":
           debug('database state was synched');
           break;
-
         default:
           debug(`Unknown type "${c.type}" reported by watch observable`);
-
       }
     });
   },
