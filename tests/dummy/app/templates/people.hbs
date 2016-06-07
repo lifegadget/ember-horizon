@@ -1,0 +1,34 @@
+<h2>People</h2>
+
+<ul>
+  {{#each model as |p|}}
+  <li class='people'>
+    <span class="remove" onclick={{route-action 'deleteUser'}}>
+      ⊗
+    </span>
+    <span class="name">{{p.name}}</span>
+    <span class="ownedBy">
+      {{#if p.owns}}
+        {{#each p.owns as |todo|}}
+          <span class="person-todo">{{todo.name}}</span>
+        {{/each}}
+      {{else}}
+        (doesn't own any TODO's)
+      {{/if}}
+      {{p.ownedBy.name}}
+    </span>
+  </li>
+  {{/each}}
+</ul>
+
+
+<p>
+  <br>
+</p>
+<h3>Add Person</h3>
+<p>
+  <form class="adding">
+    <input id='addUser' type='text' name='name' />
+    <button onclick={{route-action 'addUser'}}> Add </button>
+  </form>
+</p>

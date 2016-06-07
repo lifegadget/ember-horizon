@@ -1,0 +1,7 @@
+.people {
+  list-style: none;
+}
+.people .remove {
+  font-size: 2em;
+  cursor: pointer;
+}

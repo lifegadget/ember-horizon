@@ -26,9 +26,8 @@ export default Adapter.extend({
         resolve( this.peekRecord(type.modelName, id) );
       } else {
         horizon.collection(type)
-          .then(c => horizon.find(c, id))
+          .then(c => horizon.find(c,id))
           .then(horizon.fetch)
-          .then(horizon.subscribe)
           .then(resolve)
           .catch(reject);
       }
@@ -41,14 +40,15 @@ export default Adapter.extend({
     return new Promise((resolve, reject) => {
 
       if (horizon.isWatched(type)) {
+        console.log(`${type} is being watched`);
         resolve( this.peekAll(type.modelName) );
       } else {
         horizon.collection(type)
-          .then(horizon.findAll)
           .then(horizon.fetch)
-          .then(horizon.subscribe)
           .then(resolve)
-          .catch(reject);
+          .catch(err => {
+            console.error('problems with findAll', err);
+          });
       }
 
     }); // return promise
@@ -115,7 +115,6 @@ export default Adapter.extend({
 
       horizon.collection(type)
         .then(c => horizon.store(c, payload))
-        .then(horizon.subscribe)
         .then(resolve)
         .catch(reject);
 
@@ -129,7 +128,6 @@ export default Adapter.extend({
 
       horizon.collection(type)
         .then(c => horizon.replace(c, payload))
-        .then(horizon.subscribe)
         .then(resolve)
         .catch(reject);
 

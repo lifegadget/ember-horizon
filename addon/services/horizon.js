@@ -17,9 +17,6 @@ const pascalize = thingy => thingy ? Ember.String.capitalize(Ember.String.cameli
  * Service methods for interacting with Horizon
  */
 export default Ember.Service.extend({
-  // Services
-  store: service(),
-
   // Observable members
   currentUser: null,  // set by Horizon Observable
   status: 'init',     // set by Horizon Observable
@@ -49,10 +46,11 @@ export default Ember.Service.extend({
         resolve();
       } else {
         hz.connect();
+        debug('Connecting to Horizon ...');
         hz.onReady(() => {
+          debug('Horizon connected');
           this._statusObservable();
           this._currentUserObservable();
-          debug('horizon client connected');
           resolve();
         });
         hz.onDisconnected(() => {
@@ -75,11 +73,15 @@ export default Ember.Service.extend({
       this.connect()
         .then(() => {
           if(!this._collections[c]) {
-            this._collections[c] = hz(collection);
+            this._collections[c] = hz(c);
           }
+          console.log(`resolving collection: ${c}`, this._collections[c]);
           resolve(this._collections[c]);
         })
-        .catch(reject);
+        .catch(err => {
+          console.error(`Problem connecting to Horizon server: `, err);
+          reject(err);
+        });
 
     }); // return promise
   },
@@ -170,18 +172,50 @@ export default Ember.Service.extend({
    */
   find(collection, filterBy) {
     if (filterBy) {
+      console.log('finding');
       return Promise.resolve(collection.find(filterBy));
     } else {
       return Promise.reject({code: "find-requires-filter-by"});
     }
   },
 
-  findAll(collection, filterBy) {
-    console.log('findAll', collection, filterBy);
+  fetch(obj) {
+    return new Promise((resolve, reject) => {
+
+      console.log('fetching', obj);
+      obj.fetch().subscribe(
+        result => resolve(result),
+        err => reject(err)
+      );
+
+    }); // return promise
   },
 
-  subscribe(input) {
-    return collection.subscribe(input);
+  store(collection, payload) {
+    return new Promise((resolve, reject) => {
+
+      collection.store(payload).subscribe(
+        result => {
+          console.log('id: ', result);
+          console.log('payload: ', payload);
+          resolve(Ember.assign(payload, result));
+        },
+        err => reject(err)
+      );
+
+    }); // return promise
+  },
+
+  replace(collection, payload) {
+    return new Promise((resolve, reject) => {
+
+      console.log('replacing record: ', payload);
+      collection.replace(payload).subscribe(
+        id => resolve(id),
+        err => reject(err)
+      );
+
+    });
   },
 
   /**
@@ -240,14 +274,17 @@ export default Ember.Service.extend({
   },
 
   _statusObservable() {
-    hz.status().watch().subscribe( status => {
-      this.set('status', status);
-    });
+    console.log('_statusObservable');
+    // hz.status().watch().subscribe( updated => {
+    //   console.log('status changed');
+    //   this.set('status', updated);
+    // });
   },
   _currentUserObservable() {
-    hz.currentUser().watch().subscribe( user => {
-      this.set('currentUser', user);
-    });
+    console.log('_currentUserObservable');
+    // hz.currentUser().watch().subscribe( user => {
+    //   this.set('currentUser', user);
+    // });
   },
 
 
