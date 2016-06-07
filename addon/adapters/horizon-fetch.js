@@ -63,9 +63,8 @@ export default Adapter.extend({
         resolve( this.peekAll(type.modelName, ids) );
       } else {
         horizon.collection(type)
-          .then(c => horizon.findAll(c, ids))
+          .then(c => horizon.findMany(c, ids))
           .then(horizon.fetch)
-          .then(horizon.subscribe)
           .then(resolve)
           .catch(reject);
       }
@@ -81,7 +80,7 @@ export default Adapter.extend({
         resolve( this.peekAll(type.modelName, query) );
       } else {
         horizon.collection(type)
-          .then(c => horizon.findAll(c, query))
+          .then(c => horizon.findMany(c, query))
           .then(horizon.fetch)
           .then(horizon.subscribe)
           .then(resolve)

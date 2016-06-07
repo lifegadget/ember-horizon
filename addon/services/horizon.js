@@ -183,6 +183,22 @@ export default Ember.Service.extend({
     }); // return promise
   },
 
+  findMany(collection, filterBy) {
+    const query = filterBy.map(f => {
+      return typeOf(f) === 'object' ? f : {id: f};
+    });
+    return new Promise((resolve, reject) => {
+
+      if (filterBy) {
+        console.log('finding: ', query);
+        return resolve(collection.findAll(...query));
+      } else {
+        reject({code: "find-requires-filter-by"});
+      }
+
+    }); // return promise
+  },
+
   fetch(obj) {
     return new Promise((resolve, reject) => {
 
