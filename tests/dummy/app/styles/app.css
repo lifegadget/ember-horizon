@@ -12,3 +12,7 @@ body {
 .mute-text {
   color: darkgrey;
 }
+
+.right {
+  float: right;
+}
