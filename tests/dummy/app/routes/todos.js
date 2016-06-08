@@ -1,6 +1,9 @@
 import Ember from 'ember';
+const { inject: {service} } = Ember; // jshint ignore:line
 
 export default Ember.Route.extend({
+  // flashMessage: service(),
+
   model() {
     return this.store.findAll('todo');
   },
@@ -8,7 +11,6 @@ export default Ember.Route.extend({
   actions: {
     addTodo(e) {
       e.preventDefault();
-      console.log('adding Todo');
       const name = Ember.$('#todo-name').val();
       const due = Ember.$('#todo-date').val();
       const ownedBy = Ember.$('#person-id').val();
@@ -19,7 +21,13 @@ export default Ember.Route.extend({
         ownedBy: person
       };
       console.log(newTodo);
-      this.store.createRecord('todo', newTodo).save();
+      if(name) {
+        console.log('adding Todo');
+        this.store.createRecord('todo', newTodo).save();
+      } else {
+        console.warn('You didn\'t enter a name/description for the TODO so ignoring.');
+        this.get('flashMessages').success(`You didn't enter a name/description for the TODO so ignoring.`);
+      }
     }
   }
 });

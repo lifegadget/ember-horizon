@@ -3,7 +3,6 @@ import layout from '../templates/components/user-select';
 
 const { inject: {service} } = Ember;
 
-
 export default Ember.Component.extend({
   store: service(),
   layout,

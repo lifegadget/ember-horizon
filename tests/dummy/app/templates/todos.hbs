@@ -4,6 +4,9 @@
   {{#each model as |todo|}}
     <tr>
       <td>
+        {{ui-icon 'trash' onClick=(route-action 'deleteTodo' todo.id)}}
+      </td>
+      <td>
         {{todo.name}}
       </td>
       <td>
@@ -38,5 +41,7 @@
         </td>
       </tr>
   </table>
-  <button type="submit" name="button">Add</button>
+  <p>
+    <button type="submit" name="button">Add</button>
+  </p>
 </form>

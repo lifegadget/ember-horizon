@@ -1,8 +1,16 @@
-<h1 id="title">ember-cli-horizon</h1>
+<div class="container">
+  <h1 id="title">ember-cli-horizon</h1>
 
-Choose:
+  Choose:
 
-{{#link-to 'people'}}people{{/link-to}}
-{{#link-to 'todos'}}todos{{/link-to}}
+  {{#link-to 'index'}}{{ui-icon 'home'}}{{/link-to}} | 
+  {{#link-to 'people'}}people{{/link-to}} |
+  {{#link-to 'todos'}}todos{{/link-to}}
 
-{{outlet}}
+  <p>
+    <br>
+  </p>
+  <hr>
+
+  {{outlet}}
+</div>

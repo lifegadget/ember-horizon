@@ -1,3 +1,6 @@
+body {
+  padding-top: 2em;
+}
 .people {
   list-style: none;
 }

@@ -75,10 +75,14 @@ export default Ember.Service.extend({
             });
 
           })
-          .catch((xhr, settings, exception) => {
+          .catch(() => {
             // client driver failed
             this.set('status', 'error');
-            const err = exception || settings || {code: 'failed-to-reach-horizon-client-driver'};
+            const err = {
+              code: 'failed-to-reach-horizon-client-driver',
+              when: new Date(),
+              url: $('#client-driver').attr('src')
+            };
             console.warn('Horizon client library is still unreachable!', err);
             this.errors = this.errors ? [].concat(this.errors, err) : [].concat(err);
           });
@@ -105,6 +109,7 @@ export default Ember.Service.extend({
         $.getScript(driver)
           .done((script, textStatus) => {
             debug('Was able to load Horizon client library: ', textStatus);
+            hz = window.Horizon(config.horizon || {});
             resolve();
           })
           .fail(err => {
