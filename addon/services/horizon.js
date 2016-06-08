@@ -1,15 +1,21 @@
 import Ember from 'ember';
 import config from 'ember-get-config';
 
+const { RSVP: {Promise}, computed, debug, get, typeOf, $, inject: {service} } = Ember;
+const a = Ember.A;
+const pascalize = thingy => thingy ? Ember.String.capitalize(Ember.String.camelize(thingy)) : thingy;
+
 // The horizon object with configuration from users ENV
 // Note: often the DEV environment will be left blank
 // and rather than just let it
 const hzConfig = config.horizon || {};
-const hz = window.Horizon(hzConfig);
+let hz;
+if(window.Horizon) {
+  hz = window.Horizon(hzConfig);
+} else {
+  console.warn('Horizon client library wasn\'t available. Please be sure that the Horizon server is running.');
+}
 
-const { RSVP: {Promise}, debug, get, typeOf, inject: {service} } = Ember;
-const a = Ember.A;
-const pascalize = thingy => thingy ? Ember.String.capitalize(Ember.String.camelize(thingy)) : thingy;
 
 /**
  * @class Horizon
@@ -36,7 +42,7 @@ export default Ember.Service.extend({
   willDestroy() {
     this._watching.forEach(s => s.unsubscribe());
     this._subscriptions.forEach(s => s.unsubscribe()); // TODO: understand lifecycle better
-    hz.disconnect();
+    this.disconnect();
     this._super(...arguments);
   },
 
@@ -47,23 +53,65 @@ export default Ember.Service.extend({
       if(status === 'ready') {
         resolve();
       } else {
-        hz.connect();
-        debug('Connecting to Horizon ...');
-        hz.onReady(() => {
-          this.set('status', 'ready');
-          debug('Horizon connected');
-          this._statusObservable();
-          this._currentUserObservable();
-          resolve();
-        });
-        hz.onDisconnected(() => {
-          this._disconnected();
-          reject({code: 'disconnected', config: hz});
-        });
-        hz.onSocketError(() => {
-          this._socketError();
-          reject({code: 'socket-error'});
-        });
+        this.loadClientDriver()
+          .then(() => {
+            // Client driver is loaded
+            hz.connect();
+            debug('Connecting to Horizon ...');
+            hz.onReady(() => {
+              this.set('status', 'ready');
+              debug('Horizon connected');
+              this._statusObservable();
+              this._currentUserObservable();
+              resolve();
+            });
+            hz.onDisconnected(() => {
+              this._disconnected();
+              reject({code: 'disconnected', config: hz});
+            });
+            hz.onSocketError(() => {
+              this._socketError();
+              reject({code: 'socket-error'});
+            });
+
+          })
+          .catch((xhr, settings, exception) => {
+            // client driver failed
+            this.set('status', 'error');
+            const err = exception || settings || {code: 'failed-to-reach-horizon-client-driver'};
+            console.warn('Horizon client library is still unreachable!', err);
+            this.errors = this.errors ? [].concat(this.errors, err) : [].concat(err);
+          });
+      }
+
+    }); // return promise
+  },
+
+  disconnect() {
+    debug('Disconnecting from Horizon server');
+    hz.disconnect();
+  },
+
+  /**
+   * Typically the Horizon client driver should load with page load but if it doesn't for some
+   * reason we will retry to load it with this call
+   */
+  loadClientDriver() {
+    return new Promise((resolve, reject) => {
+
+      if(!hz) {
+        const driver = $('#client-driver').attr('src');
+        debug(`The Horizon client library wasn't available at page load, retrying now [${driver}].`);
+        $.getScript(driver)
+          .done((script, textStatus) => {
+            debug('Was able to load Horizon client library: ', textStatus);
+            resolve();
+          })
+          .fail(err => {
+            reject(err);
+          });
+      } else {
+        resolve();
       }
 
     }); // return promise
@@ -89,6 +137,14 @@ export default Ember.Service.extend({
     }); // return promise
   },
 
+  isLoggedIn: computed(function() {
+    return hz.hasAuthToken();
+  }).volatile(),
+
+  authEndpoint: computed(function() {
+    return hz.authEndpoint();
+  }).volatile(),
+
   /**
    * Given a collection (or collection query), it returns whether a watcher is
    * keeping the collection up-to-date in real-time
@@ -113,18 +169,21 @@ export default Ember.Service.extend({
    *                               change document should be sent back (raw=true).
    * @return {Observable}          RxJS observable object
    */
-  watch(collection, options = {}) {
+  watch(cb, collection, options = {}) {
     const raw = options.raw || get(this, 'raw');
+    // build the callback function
     const callback = changes => {
       const collection = collection;
       const since = new Date();
       const isRaw = raw;
+      // all change events are sent to common handler
       this._watchedChange({
         changes: changes,
         collection: collection,
         isRaw: isRaw,
         watchedSince: since
       });
+      // the callback passed in is added to the registry
     };
 
     return new Promise((resolve, reject) => {
@@ -319,7 +378,7 @@ export default Ember.Service.extend({
     const delays = [1000, 5000, 15000, 60000];
     delays.forEach(delay => {
       Ember.run.later(() => {
-        if (this.get('status') !== 'ready') {
+        if (this.get('status') === 'disconnected') {
           this.connect();
         }
       }, delay);
@@ -334,7 +393,8 @@ export default Ember.Service.extend({
     // });
   },
   _currentUserObservable() {
-    // hz.currentUser().watch().subscribe( user => {
+    // hz.currentUser().fetch().subscribe( user => {
+    //   debug('Current user changed to: ', user);
     //   this.set('currentUser', user);
     // });
   },
