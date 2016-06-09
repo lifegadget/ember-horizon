@@ -20,7 +20,16 @@ export default Ember.Route.extend({
     },
     deleteUser(id) {
       console.log(`deleting user ${id}`);
-      this.store.findRecord('person', id).then(person => person.destroyRecord());
+      this.store.findRecord('person', id).then(person => {
+        console.log(person.get('id'));
+        const deletions = person.get('owns').map(todo => {
+          return todo.destroyRecord()
+        });
+
+        Ember.RSVP.all(deletions)
+          .then(() => person.destroyRecord())
+          .catch(err => console.warn(`Problem deleting Person ${id}: `, err));
+      });
     }
   }
 });
