@@ -16,7 +16,6 @@ if(window.Horizon) {
   console.warn('Horizon client library wasn\'t available. Please be sure that the Horizon server is running.');
 }
 
-
 /**
  * @class Horizon
  *
@@ -288,6 +287,14 @@ export default Ember.Service.extend({
     }); // return promise
   },
 
+  /**
+   * Replaces an existing record in a RethinkDB collection
+   * with a full replacement JSON payload (PUT not PATCH in REST terminology)
+   *
+   * @param  {String}   collection  name of the collection
+   * @param  {Object}   payload     serialized JSON object
+   * @return {Promise}
+   */
   replace(collection, payload) {
     return new Promise((resolve, reject) => {
 
@@ -310,7 +317,6 @@ export default Ember.Service.extend({
 
     }); // return promise
   },
-
 
   /**
    * Called whenever a change is detected by one of the watched

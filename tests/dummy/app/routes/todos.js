@@ -26,8 +26,15 @@ export default Ember.Route.extend({
         this.store.createRecord('todo', newTodo).save();
       } else {
         console.warn('You didn\'t enter a name/description for the TODO so ignoring.');
-        this.get('flashMessages').success(`You didn't enter a name/description for the TODO so ignoring.`);
+        this.get('flashMessages').danger(`You didn't enter a name/description for the TODO so ignoring.`);
       }
+    },
+    deleteTodo(id) {
+      this.store.findRecord('todo', id)
+        .then(todo => todo.destroyRecord())
+        .catch(err => {
+          console.warn(`Problem deleting TODO ${id}: `, err);
+        });
     }
   }
 });

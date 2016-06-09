@@ -1,26 +1,28 @@
 <h2>People</h2>
 
-<ul>
+
+
+<table class="table">
   {{#each model as |p|}}
-  <li class='people'>
-    <span class="remove" onclick={{route-action 'deleteUser' p.id}}>
-      ⊗
-    </span>
-    <span class="name">{{p.name}}</span>
-    <span class="ownedBy">
-      {{#if p.owns}}
-        - owns:
-        {{#each p.owns as |todo|}}
-          <span class="person-todo">{{todo.name}}, </span>
-        {{/each}}
-      {{else}}
-        <span class="mute-text">(doesn't own any TODO's)</span>
-      {{/if}}
-      {{p.ownedBy.name}}
-    </span>
-  </li>
+    <tr id="row-{{p.id}}">
+      <td>
+        {{ui-icon 'trash' pointer=true onClick=(route-action 'deleteUser' p.id)}}
+      </td>
+      <td>
+        {{p.name}}
+      </td>
+      <td>
+        {{#if p.owns}}
+          {{#each p.owns as |todo|}}
+            <span class="person-todo">{{todo.name}}<br> </span>
+          {{/each}}
+        {{else}}
+          <span class="mute-text">(doesn't own any TODO's)</span>
+        {{/if}}
+      </td>
+    </tr>
   {{/each}}
-</ul>
+</table>
 
 
 <p>

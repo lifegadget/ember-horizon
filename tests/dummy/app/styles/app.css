@@ -16,3 +16,7 @@ body {
 .right {
   float: right;
 }
+
+table td {
+  padding: .15em;
+}

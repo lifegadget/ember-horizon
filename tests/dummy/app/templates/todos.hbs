@@ -1,10 +1,10 @@
 <h2>TODO's</h2>
 
-<table>
+<table class='table'>
   {{#each model as |todo|}}
     <tr>
       <td>
-        {{ui-icon 'trash' onClick=(route-action 'deleteTodo' todo.id)}}
+        {{ui-icon 'trash' pointer=true onClick=(route-action 'deleteTodo' todo.id)}}
       </td>
       <td>
         {{todo.name}}

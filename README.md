@@ -130,6 +130,29 @@ config/environment.js
 > valid authType's are _unauthenticated, _anonymous_, and _token_ where "token" implies using a 3rd party provider (google, facebook, etc.) that has appropriate server configuration
 
 
+### Referential Integrity
+
+Ember model's act as a client-side contract to both the attributes and relationships that a given entity has. In the case of relationships, however, Ember Data does not by itself enforce referential integrity. As an example, given the two models below:
+
+```js
+// todo model
+export default Model.extend({
+  name: attr('string'),
+  due: attr('string'),
+  ownedBy: belongsTo('person', {inverse: 'owns'})
+});
+// person model
+export default Model.extend({
+  name: attr('string'),
+  owns: hasMany('todo', {inverse: 'ownedBy'})
+});
+```
+
+- Use Case 1
+  - You add a new TODO and while doing so you set the "belongsTo" relationship `ownedBy` a known Person record
+  - Now the TODO correctly points to the owner of the TODO, but ...
+  - The explicitly stated "inverse" -- Person's `owns` relationship -- is not aware of the change.
+
 
 ## Warnings and shortcomings
 
