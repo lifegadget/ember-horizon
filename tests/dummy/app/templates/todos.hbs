@@ -2,7 +2,7 @@
 
 <table class='table'>
   {{#each model as |todo|}}
-    <tr>
+    <tr id="todo-{{todo.id}}">
       <td>
         {{ui-icon 'trash' pointer=true onClick=(route-action 'deleteTodo' todo.id)}}
       </td>
@@ -13,7 +13,7 @@
         {{todo.due}}
       </td>
       <td>
-        {{todo.ownedBy}}
+        {{todo.ownedBy.name}}
       </td>
     </tr>
   {{/each}}

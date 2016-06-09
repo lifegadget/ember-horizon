@@ -15,7 +15,7 @@ export default Adapter.extend({
   horizon: service(),
 
   // Horizon returns objects as plain JSON.
-  defaultSerializer: 'json',
+  defaultSerializer: '-rest',
 
   findRecord(store, typeClass, id) {
     const horizon = get(this, 'horizon');
@@ -37,14 +37,21 @@ export default Adapter.extend({
 
   findAll(store, typeClass) {
     const horizon = get(this, 'horizon');
+    const state = {
+      store,
+      type: typeClass,
+      model: typeClass.modelName
+    };
+    console.log(`findAll for ${state.model}`);
+
     return new Promise((resolve, reject) => {
 
-      if (horizon.isWatched(typeClass)) {
-        resolve( store.peekAll(typeClass.modelName) );
+      if (horizon.isWatched(state.model)) {
+        resolve( store.peekAll(state.model) );
       } else {
-        horizon.collection(typeClass)
+        horizon.collection(state)
           .then(horizon.fetch)
-          .then(resolve)
+          .then(s => resolve(s.payload))
           .catch(err => {
             console.error('problems with findAll', err);
             reject(err);
@@ -56,15 +63,21 @@ export default Adapter.extend({
 
   findMany(store, typeClass, ids) {
     const horizon = get(this, 'horizon');
+    const state = {
+      store,
+      type: typeClass,
+      model: typeClass.modelName,
+      ids: ids
+    };
     return new Promise((resolve, reject) => {
 
-      if (horizon.isWatched(typeClass)) {
-        resolve( store.peekAll(typeClass.modelName, ids) );
+      if (horizon.isWatched(state.model)) {
+        resolve( store.peekAll(state.model, ids) );
       } else {
-        horizon.collection(typeClass)
-          .then(c => horizon.findMany(c, ids))
+        horizon.collection(state)
+          .then(horizon.findMany)
           .then(horizon.fetch)
-          .then(resolve)
+          .then(s => resolve(s.payload))
           .catch(reject);
       }
 
@@ -73,16 +86,21 @@ export default Adapter.extend({
 
   query(store, typeClass, query) {
     const horizon = get(this, 'horizon');
+    const state = {
+      store,
+      type: typeClass,
+      model: typeClass.modelName,
+      query
+    };
     return new Promise((resolve, reject) => {
 
-      if (horizon.isWatched(typeClass.modelName)) {
-        resolve( this.peekAll(typeClass.modelName, query) ); // TODO: this may not work with query
+      if (horizon.isWatched(state.model)) {
+        resolve( this.peekAll(state.model, state.query) ); // TODO: this may not work with query
       } else {
-        horizon.collection(typeClass)
-          .then(c => horizon.findMany(c, query))
+        horizon.collection(state)
+          .then(horizon.findMany)
           .then(horizon.fetch)
-          .then(horizon.subscribe)
-          .then(resolve)
+          .then(s => resolve(s.payload))
           .catch(reject);
       }
 
@@ -91,16 +109,22 @@ export default Adapter.extend({
 
   queryRecord(store, type, query) {
     const horizon = get(this, 'horizon');
+    const state = {
+      store,
+      type,
+      model: type.modelName,
+      query
+    };
+
     return new Promise((resolve, reject) => {
 
-      if (horizon.isWatched(type)) {
-        resolve( store.peekAll(type.modelName, query) ); // TODO: this may not work with query
+      if (horizon.isWatched(state.model)) {
+        resolve( store.peekAll(state.model, state.query) ); // TODO: this may not work with query
       } else {
-        horizon.collection(type)
-          .then(c => horizon.find(c, query))
+        horizon.collection(state)
+          .then(horizon.find)
           .then(horizon.fetch)
-          .then(horizon.subscribe)
-          .then(resolve)
+          .then(s => resolve(s.payload))
           .catch(reject);
       }
 
@@ -109,12 +133,19 @@ export default Adapter.extend({
 
   createRecord(store, type, snapshot) {
     const horizon = get(this, 'horizon');
-    const payload = this.serialize(snapshot);
+    const state = {
+      store,
+      payload: snapshot.serialize(),
+      type,
+      model: type.modelName,
+      snapshot
+    };
+
     return new Promise((resolve, reject) => {
 
-      horizon.collection(type)
-        .then(c => horizon.store(c, payload))
-        .then(resolve)
+      horizon.collection(state)
+        .then(horizon.store)
+        .then(s => resolve(s.payload))
         .catch(reject);
 
     }); // return promise
@@ -122,66 +153,42 @@ export default Adapter.extend({
 
   updateRecord(store, type, snapshot) {
     const horizon = get(this, 'horizon');
-    const payload = this.serialize(snapshot, { includeId: true });
+    const state = {
+      store,
+      payload: snapshot.serialize({ includeId: true }),
+      type,
+      model: type.modelName,
+      snapshot
+    };
+
     return new Promise((resolve, reject) => {
 
-      horizon.collection(type)
-        // .then(c => this._updateRelationships(store, c, snapshot))
-        .then(c => horizon.replace(c, payload))
-        .then(resolve)
+      horizon.collection(state)
+        .then(horizon.replace)
+        .then(s => resolve(s.payload))
         .catch(reject);
 
     }); // return promise
   },
-
-  // _updateRelationships(store, collection, snapshot) {
-  //   const payload = this.serialize(snapshot, { includeId: true });
-  //   const data = payload[relationshipKey];
-  //   snapshot.record.eachRelationship((key, relationship) => {
-  //     const isEmbedded = this.isRelationshipEmbedded(store, typeClass.modelName, relationship);
-  //     const hasMany = relationship.kind === 'hasMany';
-  //   });
-  // },
 
   deleteRecord(store, type, snapshot) {
     const horizon = get(this, 'horizon');
     const id = typeOf(snapshot) === 'object' ? snapshot.id : snapshot;
+    const state = {
+      store,
+      type,
+      model: type.modelName,
+      snapshot,
+      id: id
+    };
+
     console.log(`preparing to delete ${id}`);
     return new Promise((resolve, reject) => {
 
-      const state = {};
-      horizon.collection(type)
-        // .then(c => this._stash(c, state, 'connection'))
-        // .then(this._evaluateRelationships('delete', store, type, snapshot))
-        .then(c => horizon.remove(c, id))
-        .then(resolve)
+      horizon.collection(state)
+        .then(horizon.remove)
+        .then(s => resolve(s.payload))
         .catch(reject);
-
-    }); // return promise
-  },
-
-  /**
-   * Evaluates a record's relationships when a write-based CRUD operation
-   * is being applied. This behaviour helps to ensure referential entegriy
-   * is maintained in an environment where the server most typically would
-   * be responsible for this.
-   *
-   * The Horizon server doesn't support model/schema support and neither does
-   * RethinkDB so having built-in support in the client is useful but should be
-   * "opt-in" so you must state in your configuration: `enforceRefIntegrity: true`.
-   *
-   * @param  {String} crud       Crud operation being performed
-   * @param  {Object} store      Ember Data store
-   * @param  {object} type       Ember Data typeClass
-   * @param  {object} snapshot   Ember data snapshot
-   * @return {Promise}
-   */
-  _evaluateRelationships(collection, crud, store, snapshot) {
-    return new Promise((resolve, reject) => {
-
-      switch(crud) {
-
-      }
 
     }); // return promise
   },
@@ -244,5 +251,29 @@ export default Adapter.extend({
         // deploy handler
         // horizon.watch(changeHandler, model);
       };
+  },
+
+  _stash(...args) {
+    let value;
+    let target;
+    let property;
+
+    switch (args.length) {
+    case 3:
+      [value, target, property] = args;
+      target[property] = value;
+      return Promise.resolve(value);
+    case 2:
+      [value, target] = args;
+      if (typeOf(value) === 'object' && typeOf(target) === 'object') {
+        target = Object.assign(target, value);
+      } else if (typeOf(target) === 'array') {
+        console.log('pushing value: ', value);
+        target.push(value);
+      } else {
+        throw new Error('invalid use of stash parameters:' + JSON.stringify(args, null, 2));
+      }
+      return Promise.resolve(value);
+    }
   }
 });

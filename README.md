@@ -152,7 +152,8 @@ export default Model.extend({
   - You add a new TODO and while doing so you set the "belongsTo" relationship `ownedBy` a known Person record
   - Now the TODO correctly points to the owner of the TODO, but ...
   - The explicitly stated "inverse" -- Person's `owns` relationship -- is not aware of the change.
-
+- Use Case 2
+  - You delete a Person who has several TODO's assigned to them
 
 ## Warnings and shortcomings
 

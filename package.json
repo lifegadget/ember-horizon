@@ -38,7 +38,7 @@
     "bootstrap": "4.0.0-alpha.2",
     "broccoli-asset-rev": "^2.4.2",
     "chalk": "1.1.3",
-    "demo-helper": "0.2.12",
+    "demo-helper": "0.2.13",
     "ember-ajax": "0.7.1",
     "ember-cli": "2.5.1",
     "ember-cli-app-version": "^1.0.0",
