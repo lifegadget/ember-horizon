@@ -5,6 +5,40 @@ const a = Ember.A;
 const pascalize = thingy => thingy ? Ember.String.capitalize(Ember.String.camelize(thingy)) : thingy;
 
 export default Ember.Mixin.create({
+  init() {
+    this._super(...arguments);
+    this._subscriptions = [];
+    this._watching = [];
+    this._watchers = [];
+  },
+  /**
+   * The collections which are actively being watched
+   * by Horizon Observables
+   *
+   * @type {Array}
+   */
+  _watching: null,
+  /**
+   * All the consumers who have expressed an interest in
+   * watching a given collection type. The array is of
+   * the following structure:
+   *
+   * 	{
+   * 		collection: 'collections-name',
+   * 		cb: <function>,
+   * 		owner: 'container'
+   * 	}
+   *
+   * the "owner" property is purely decorative but helps give
+   * context to who the "container object" is.
+   *
+   * One last note, there is a 1:M relationship between _watching(1)
+   * to _watchers(M).
+   *
+   * @type {Array}
+   */
+  _watchers: null,
+
 
   /**
    * Given a collection (or collection query), it returns whether a watcher is
@@ -23,15 +57,21 @@ export default Ember.Mixin.create({
    * a whole collection, a query, or a singular document. When an update
    * is detected the callback will be fired
    *
-   * @param  {String}   collection the name of the collection to scope the changestream to
-   * @param  {Object}   options    additional options parameters include "query" and "id" to further scope stream
-   *                               you can also state "raw" (boolean) which states whether Horizon should process
-   *                               the change and just return the full results set (raw=false) or the stream's
+   * @param  {String}   collection the name of the collection to scope the
+   *                               "changestream" to
+   * @param  {String}   cb         the callback function to call when a change event
+   *                               is detected
+   * @param  {Object}   options    options include "query" and "id" to further
+   *                               delineate the scope of the changestream.
+   *                               Also, "raw" (boolean) which states whether Horizon
+   *                               should process the change and just return the
+   *                               full results set (raw=false) or the stream's
    *                               change document should be sent back (raw=true).
+   *                               By default this will be `true`.
    * @return {Observable}          RxJS observable object
    */
   watch(cb, collection, options = {}) {
-    const raw = options.raw || get(this, 'raw');
+    const raw = options.raw || false;
     // build the callback function
     const callback = changes => {
       const collection = collection;

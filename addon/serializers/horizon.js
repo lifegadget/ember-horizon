@@ -4,7 +4,7 @@ export default JSONSerializer.extend({
   /**
    * @override
    */
-  _shouldSerializeHasMany(snapshot, key, relationship) {
+  _shouldSerializeHasMany(snapshot, key) {
     return this._canSerialize(key);
   }
 });

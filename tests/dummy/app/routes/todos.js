@@ -41,7 +41,7 @@ export default Ember.Route.extend({
 
           todo.destroyRecord().then(() => {
             person.save();
-          })
+          });
           return todo;
         })
         .catch(err => {

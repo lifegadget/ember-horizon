@@ -1,6 +1,6 @@
 import { moduleFor, test } from 'ember-qunit';
 
-moduleFor('adapter:horizon-fetch', 'Unit | Adapter | horizon-fetch', {
+moduleFor('adapter:horizon', 'Unit | Adapter | horizon', {
   // Specify the other units that are required for this test.
   // needs: ['serializer:foo']
 });

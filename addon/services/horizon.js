@@ -29,14 +29,6 @@ export default Ember.Service.extend(Watching, {
   hasAuthToken: null,   // set by Horizon Observable
   raw: true,            // specifies detail/structure in watched changes (true = RethinkDB changestream)
 
-  init() {
-    this._super(...arguments);
-    this._collections = []; // TODO: check whether Horizon does collection caching for you
-    this._subscriptions = [];
-    this._watching = [];
-    this._registeredWatchers = [];
-  },
-
   willDestroy() {
     this._watching.forEach(s => s.unsubscribe());
     this._subscriptions.forEach(s => s.unsubscribe()); // TODO: understand lifecycle better
@@ -136,17 +128,14 @@ export default Ember.Service.extend(Watching, {
 
       this.connect()
         .then(() => {
-          if(!this._collections[model]) {
-            this._collections[model] = hz(model);
-          }
-
+          const collection = hz(model);
           resolve(Ember.assign(
-            { collection: this._collections[model] },
+            { collection: collection },
             state
           ));
         })
         .catch(err => {
-          console.error(`Problem connecting to Horizon server: `, err);
+          console.error(`Problem getting "${model}" collection: `, err);
           reject(err);
         });
 
@@ -197,7 +186,8 @@ export default Ember.Service.extend(Watching, {
 
   findMany(state) {
     // inputs
-    const {collection, filterBy} = state;
+    const {collection} = state;
+    const filterBy = state.findBy || state.ids;
     const query = filterBy.map(f => {
       return typeOf(f) === 'object' ? f : {id: f};
     });
@@ -205,14 +195,16 @@ export default Ember.Service.extend(Watching, {
     return new Promise((resolve, reject) => {
 
       if (filterBy) {
-        collection.findAll(...query)
-          .then(c2 => {
+        console.log('findAll: ', ...query, collection);
+        collection.findAll(
+          ...query,
+          c2 => {
             // update state to include collection
             // with filtered scope from filterBy query
             state.collection = c2;
-            return resolve(state);
-          })
-          .catch(err => {
+            resolve(state);
+          },
+          err => {
             debug(`Problem running Horizon.findMany() with given state: `, state);
             reject(err);
           });
