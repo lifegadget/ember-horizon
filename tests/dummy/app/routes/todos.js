@@ -2,7 +2,7 @@ import Ember from 'ember';
 const { inject: {service}, RSVP: {Promise} } = Ember; // jshint ignore:line
 
 export default Ember.Route.extend({
-  // flashMessage: service(),
+  flashMessages: service(),
 
   model() {
     return this.store.findAll('todo');
@@ -32,12 +32,6 @@ export default Ember.Route.extend({
           this.store.createRecord('todo', newTodo).save().then(todo => {
             console.log(`The todo's name is ${todo.get('name')}, id is ${todo.get('id')}`);
           });
-          // const newTodo = this.store.createRecord('todo', newTodo);
-          // newTodo.save().then(todo => {
-          //   console.log('The TODO before person save: ', todo);
-          //   person.get('owns').pushObject(todo);
-          //   person.save();
-          // });
         } else {
           console.warn('You didn\'t enter a name/description for the TODO so ignoring.');
           this.get('flashMessages').danger(`You didn't enter a name/description for the TODO so ignoring.`);

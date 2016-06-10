@@ -173,7 +173,8 @@ export default Ember.Service.extend(Watching, {
    */
   find(state) {
     // inputs
-    const {collection, filterBy} = state;
+    const {collection} = state;
+    const filterBy = state.filterBy || {id: state.id};
     // promise
     return new Promise((resolve, reject) => {
 
@@ -247,10 +248,10 @@ export default Ember.Service.extend(Watching, {
 
       console.log('fetching: ', state);
       collection.fetch().subscribe(
-        result => resolve(Ember.assign(
-          {payload: result},
-          state
-        )),
+        result => {
+          state = Ember.assign({payload: result}, state);
+          resolve(state);
+        },
         err => reject(err)
       );
 

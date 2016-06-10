@@ -1,6 +1,8 @@
 import Ember from 'ember';
+const { inject: {service}, RSVP: {Promise} } = Ember; // jshint ignore:line
 
 export default Ember.Route.extend({
+  flashMessages: service(),
 
   model() {
     return this.store.findAll('person');
@@ -16,11 +18,14 @@ export default Ember.Route.extend({
         Ember.$('#addUser').val('');
       } else {
         console.warn('There was no user name to add!');
+        this.get('flashMessages').danger(`You didn't enter a name/description for the Person so ignoring.`);
       }
     },
     deleteUser(id) {
       console.log(`deleting user ${id}`);
-      this.store.findRecord('person', id).then(person => person.destroyRecord());
+      const person = this.store.peekRecord('person', id);
+
+      person.destroyRecord();
     }
   }
 });

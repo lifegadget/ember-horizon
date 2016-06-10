@@ -19,16 +19,23 @@ export default Adapter.extend({
 
   findRecord(store, typeClass, id) {
     const horizon = get(this, 'horizon');
+    const state = {
+      store,
+      type: typeClass,
+      model: typeClass.modelName,
+      id
+    };
+
     return new Promise((resolve, reject) => {
 
       // If subscription exists we assume record already up-to-date
-      if(horizon.isWatched(typeClass)) {
-        resolve( this.peekRecord(typeClass.modelName, id) );
+      if(horizon.isWatched(state.model)) {
+        resolve( this.peekRecord(state.model, id) );
       } else {
-        horizon.collection(typeClass)
-          .then(c => horizon.find(c,id))
+        horizon.collection(state)
+          .then(horizon.find)
           .then(horizon.fetch)
-          .then(resolve)
+          .then(s => resolve(s.payload))
           .catch(reject);
       }
 
@@ -42,7 +49,6 @@ export default Adapter.extend({
       type: typeClass,
       model: typeClass.modelName
     };
-    console.log(`findAll for ${state.model}`);
 
     return new Promise((resolve, reject) => {
 
@@ -252,28 +258,4 @@ export default Adapter.extend({
         // horizon.watch(changeHandler, model);
       };
   },
-
-  _stash(...args) {
-    let value;
-    let target;
-    let property;
-
-    switch (args.length) {
-    case 3:
-      [value, target, property] = args;
-      target[property] = value;
-      return Promise.resolve(value);
-    case 2:
-      [value, target] = args;
-      if (typeOf(value) === 'object' && typeOf(target) === 'object') {
-        target = Object.assign(target, value);
-      } else if (typeOf(target) === 'array') {
-        console.log('pushing value: ', value);
-        target.push(value);
-      } else {
-        throw new Error('invalid use of stash parameters:' + JSON.stringify(args, null, 2));
-      }
-      return Promise.resolve(value);
-    }
-  }
 });
