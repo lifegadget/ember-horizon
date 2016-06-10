@@ -106,7 +106,7 @@ In most cases this will be done for you transparently but if you ever need them 
 #### Watching
 
 - `watch(cb, collection, options)` - allows you to setup a changestream to a collection, document, or query
-- `isWatched(type)` - returns a boolean flag indicating whether the given "changestream" watcher is in place. Typically "type" would be the name of the collection/model but in more complex query-based changestream's you'll need to rely on _id_ passed back by `watch()`
+- `willWatch(type)` - returns a boolean flag indicating whether the given "changestream" watcher is in place. Typically "type" would be the name of the collection/model but in more complex query-based changestream's you'll need to rely on _id_ passed back by `watch()`
 
 
 ### Configuration

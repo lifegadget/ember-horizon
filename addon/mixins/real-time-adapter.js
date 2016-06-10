@@ -22,7 +22,7 @@ export default Ember.Mixin.create({
   _listenForChanges(store, type) {
     const horizon = this.get('horizon');
     const model = typeOf(type) === 'string' ? type : type.modelName;
-    if (!horizon.isWatched(model)) {
+    if (!horizon.willWatch(model)) {
       debug(`The model/collection "${model}" was being added as a real-time collection but it is already being watched!`);
       return;
     }

@@ -1,8 +1,9 @@
 import Ember from 'ember';
 import Adapter from 'ember-data/adapter';
 import RealTimeAdapter from '../mixins/real-time-adapter';
+import logger from '../utils/logger';
 
-const { RSVP: {Promise}, get, inject: {service}, typeOf } = Ember;
+const { RSVP: {Promise}, get, inject: {service}, typeOf, assert } = Ember;
 
 /**
  * @class HorizonFetchAdapter
@@ -14,9 +15,7 @@ const { RSVP: {Promise}, get, inject: {service}, typeOf } = Ember;
  */
 export default Adapter.extend(RealTimeAdapter, {
   horizon: service(),
-
-  // Horizon returns objects as plain JSON.
-  defaultSerializer: '-rest',
+  defaultSerializer: '-horizon',
 
   findRecord(store, typeClass, id) {
     const horizon = get(this, 'horizon');
@@ -30,7 +29,7 @@ export default Adapter.extend(RealTimeAdapter, {
     return new Promise((resolve, reject) => {
 
       // If subscription exists we assume record already up-to-date
-      if(horizon.isWatched(state.model)) {
+      if(horizon.willWatch(state.model)) {
         resolve( this.peekRecord(state.model, id) );
       } else {
         horizon.collection(state)
@@ -53,14 +52,14 @@ export default Adapter.extend(RealTimeAdapter, {
 
     return new Promise((resolve, reject) => {
 
-      if (horizon.isWatched(state.model)) {
+      if (horizon.willWatch(state.model)) {
         resolve( store.peekAll(state.model) );
       } else {
         horizon.collection(state)
           .then(horizon.fetch)
           .then(s => resolve(s.payload))
           .catch(err => {
-            console.error('problems with findAll', err);
+            console.error(`problems running findAll('${state.model}')`, err);
             reject(err);
           });
       }
@@ -78,14 +77,17 @@ export default Adapter.extend(RealTimeAdapter, {
     };
     return new Promise((resolve, reject) => {
 
-      if (horizon.isWatched(state.model)) {
+      if (horizon.willWatch(state.model)) {
         resolve( store.peekAll(state.model, ids) );
       } else {
         horizon.collection(state)
           .then(horizon.findMany)
           .then(horizon.fetch)
           .then(s => resolve(s.payload))
-          .catch(reject);
+          .catch(err => {
+            assert('Error in executing findMany()', this);
+            reject(err);
+          });
       }
 
     }); // return promise
@@ -101,7 +103,7 @@ export default Adapter.extend(RealTimeAdapter, {
     };
     return new Promise((resolve, reject) => {
 
-      if (horizon.isWatched(state.model)) {
+      if (horizon.willWatch(state.model)) {
         resolve( this.peekAll(state.model, state.query) ); // TODO: this may not work with query
       } else {
         horizon.collection(state)
@@ -125,7 +127,7 @@ export default Adapter.extend(RealTimeAdapter, {
 
     return new Promise((resolve, reject) => {
 
-      if (horizon.isWatched(state.model)) {
+      if (horizon.willWatch(state.model)) {
         resolve( store.peekAll(state.model, state.query) ); // TODO: this may not work with query
       } else {
         horizon.collection(state)

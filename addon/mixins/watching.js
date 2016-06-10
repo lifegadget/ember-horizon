@@ -18,6 +18,7 @@ export default Ember.Mixin.create({
    * @type {Array}
    */
   _watching: null,
+
   /**
    * All the consumers who have expressed an interest in
    * watching a given collection type. The array is of
@@ -39,15 +40,31 @@ export default Ember.Mixin.create({
    */
   _watchers: null,
 
+  /**
+   * Indicates if the running configuration is set to watch this
+   * collection (at the point that a findAll() is made against
+   * the collection ... which enables lazy loading of only what
+   * you need)
+   *
+   * @param  {String} handle  In most cases this is just the name of the collection;
+   *                          in situations where detailed watchers are setup you will
+   *                          need to rely on the handle's name from watch()
+   * @return {Boolean}           [description]
+   */
+  willWatch(handle) {
+    return false;
+  },
 
   /**
    * Given a collection (or collection query), it returns whether a watcher is
    * keeping the collection up-to-date in real-time
    *
-   * @param  {String}    type   The name of the model/collection
+   * @param  {String} handle  In most cases this is just the name of the collection;
+   *                          in situations where detailed watchers are setup you will
+   *                          need to rely on the handle's name from watch()
    * @return {Boolean}
    */
-  isWatched(collection) {
+  isWatching(handle) {
     // TODO: implement
     return false;
   },
@@ -68,9 +85,9 @@ export default Ember.Mixin.create({
    *                               full results set (raw=false) or the stream's
    *                               change document should be sent back (raw=true).
    *                               By default this will be `true`.
-   * @return {Observable}          RxJS observable object
+   * @return {String}              returns a string "handle" for this
    */
-  watch(cb, collection, options = {}) {
+  watch(collection, cb, options = {}) {
     const raw = options.raw || false;
     // build the callback function
     const callback = changes => {

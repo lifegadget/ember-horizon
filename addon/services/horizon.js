@@ -2,7 +2,7 @@ import Ember from 'ember';
 import config from 'ember-get-config';
 import Watching from '../mixins/watching';
 
-const { RSVP: {Promise}, computed, debug, get, typeOf, $, inject: {service} } = Ember;
+const { RSVP: {Promise}, computed, debug, get, typeOf, $, inject: {service}, assert } = Ember;
 
 // The horizon object with configuration from users ENV
 // Note: often the DEV environment will be left blank
@@ -14,6 +14,23 @@ if(window.Horizon) {
 } else {
   console.warn('Horizon client library wasn\'t available. Please be sure that the Horizon server is running.');
 }
+
+/**
+ * Helps create a workflow stack for promise chains
+ */
+const workflow = function(state, newState) {
+  let wf = state.workflow || [];
+  if (wf) {
+    if(typeOf(wf) !== 'array') {
+      debug('promise workflow was set but to a non-array value: ', wf);
+      wf = [];
+    }
+    wf.push(newState);
+  } else {
+    wf = [ newState ];
+  }
+  return wf;
+};
 
 /**
  * @class Horizon
@@ -51,8 +68,6 @@ export default Ember.Service.extend(Watching, {
             hz.onReady(() => {
               this.set('status', 'ready');
               debug('Horizon connected');
-              // this._statusObservable();
-              // this._currentUserObservable();
               resolve();
             });
             hz.onDisconnected(() => {
@@ -63,7 +78,6 @@ export default Ember.Service.extend(Watching, {
               this._socketError();
               reject({code: 'socket-error'});
             });
-
           })
           .catch(() => {
             // client driver failed
@@ -128,11 +142,9 @@ export default Ember.Service.extend(Watching, {
 
       this.connect()
         .then(() => {
-          const collection = hz(model);
-          resolve(Ember.assign(
-            { collection: collection },
-            state
-          ));
+          state.collection = hz(model);
+          state.workflow = workflow(state,'collection');
+          resolve(state);
         })
         .catch(err => {
           console.error(`Problem getting "${model}" collection: `, err);
@@ -172,10 +184,10 @@ export default Ember.Service.extend(Watching, {
         return;
       }
 
-
       if (filterBy) {
         console.log('finding with filter: ', filterBy);
         state.collection = collection.find(filterBy);
+        state.workflow = workflow(state,'find');
         return resolve(state);
       } else {
         reject({code: "find-requires-filter-by"});
@@ -187,29 +199,28 @@ export default Ember.Service.extend(Watching, {
   findMany(state) {
     // inputs
     const {collection} = state;
-    const filterBy = state.findBy || state.ids;
-    const query = filterBy.map(f => {
+    const filterBy = (state.findBy || state.ids || []).map(f => {
       return typeOf(f) === 'object' ? f : {id: f};
     });
+    state.filterBy = filterBy;
     // promise
     return new Promise((resolve, reject) => {
+      if(!collection) {
+        const message = `Horizon "find" called but state didn't have collection property`;
+        assert(message, this);
+        reject({code: 'no-collection-property', message: message});
+        return;
+      }
 
       if (filterBy) {
-        console.log('findAll: ', ...query, collection);
-        collection.findAll(
-          ...query,
-          c2 => {
-            // update state to include collection
-            // with filtered scope from filterBy query
-            state.collection = c2;
-            resolve(state);
-          },
-          err => {
-            debug(`Problem running Horizon.findMany() with given state: `, state);
-            reject(err);
-          });
+        // update state to include collection
+        // with filtered scope from filterBy query
+        const c2 = collection.findAll(...filterBy);
+        state.collection = c2;
+        state.workflow = workflow(state,'findMany');
+        resolve(state);
       } else {
-        reject({code: "find-requires-filter-by"});
+        reject({code: "find-requires-filter-criteria", state: state});
       }
 
     }); // return promise
@@ -228,10 +239,10 @@ export default Ember.Service.extend(Watching, {
     // promise
     return new Promise((resolve, reject) => {
 
-      console.log('fetching: ', state);
       collection.fetch().subscribe(
         result => {
-          state = Ember.assign({payload: result}, state);
+          state.workflow = workflow(state, 'fetch');
+          state.payload = result;
           resolve(state);
         },
         err => reject(err)
@@ -250,6 +261,7 @@ export default Ember.Service.extend(Watching, {
       collection.store(payload).subscribe(
         serverProperties => {
           state.payload = Ember.assign(payload, serverProperties);
+          state.workflow = workflow(state, 'store');
           resolve(state);
         },
         err => reject(err)
@@ -287,7 +299,10 @@ export default Ember.Service.extend(Watching, {
     return new Promise((resolve, reject) => {
 
       collection.remove(id).subscribe(
-        () => resolve(state),
+        () => {
+          state.workflow = workflow(state, 'remove');
+          resolve(state);
+        },
         err => reject(err)
       );
 
