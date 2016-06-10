@@ -1,4 +1,3 @@
-import Horizon from 'ember-cli-horizon/serializers/horizon';
+import HorizonSerializer from 'ember-cli-horizon/serializers/horizon';
 
-export default Horizon.extend({
-});
+export default HorizonSerializer.extend({});

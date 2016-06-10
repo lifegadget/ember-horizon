@@ -1,8 +1,8 @@
 import Ember from 'ember';
-const { inject: {service}, RSVP: {Promise} } = Ember; // jshint ignore:line
+const { inject: {service} } = Ember; // jshint ignore:line
 
 export default Ember.Route.extend({
-  flashMessages: service(),
+  // flashMessage: service(),
 
   model() {
     return this.store.findAll('todo');
@@ -14,37 +14,36 @@ export default Ember.Route.extend({
       const name = Ember.$('#todo-name').val();
       const due = Ember.$('#todo-date').val();
       const ownedBy = Ember.$('#person-id').val();
-      let personPromise;
-      if(ownedBy) {
-        personPromise = this.store.findRecord('person', ownedBy);
-      } else {
-        personPromise = Promise.resolve();
-      }
-
-      personPromise.then(person => {
-        const newTodo = {
+      const person = this.store.peekRecord('person', ownedBy);
+      if(name) {
+        const newTodo = this.store.createRecord('todo', {
           name: name,
           due: due,
           ownedBy: person
-        };
-        if(name) {
-          console.log('adding Todo');
-          this.store.createRecord('todo', newTodo).save().then(todo => {
-            console.log(`The todo's name is ${todo.get('name')}, id is ${todo.get('id')}`);
-          });
-        } else {
-          console.warn('You didn\'t enter a name/description for the TODO so ignoring.');
-          this.get('flashMessages').danger(`You didn't enter a name/description for the TODO so ignoring.`);
-        }
+        });
+        person.get('owns').pushObject(newTodo);
 
-      })
-      .catch(err => {
-        console.error(`Problem finding person ${ownedBy}`, err);
-      });
+        newTodo.save().then(() => {
+          return person.save();
+        });
+
+      } else {
+        console.warn('You didn\'t enter a name/description for the TODO so ignoring.');
+        this.get('flashMessages').danger(`You didn't enter a name/description for the TODO so ignoring.`);
+      }
     },
     deleteTodo(id) {
       this.store.findRecord('todo', id)
-        .then(todo => todo.destroyRecord())
+        .then(todo => {
+          const ownedBy = todo.get('ownedBy');
+          const person = this.store.peekRecord('person', ownedBy.get('id'));
+          console.log(person.get('name'), person.get('id'));
+
+          todo.destroyRecord().then(() => {
+            person.save();
+          })
+          return todo;
+        })
         .catch(err => {
           console.warn(`Problem deleting TODO ${id}: `, err);
         });
