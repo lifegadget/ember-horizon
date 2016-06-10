@@ -1,6 +1,8 @@
 import Ember from 'ember';
+const { inject: {service} } = Ember; // jshint ignore:line
 
 export default Ember.Route.extend({
+  flashMessages: service(),
 
   model() {
     return this.store.findAll('person');
@@ -16,6 +18,7 @@ export default Ember.Route.extend({
         Ember.$('#addUser').val('');
       } else {
         console.warn('There was no user name to add!');
+        this.get('flashMessages').danger(`You didn't enter a name so ignoring request to add a PERSON.`);
       }
     },
     deleteUser(id) {
@@ -23,7 +26,7 @@ export default Ember.Route.extend({
       this.store.findRecord('person', id).then(person => {
         console.log(person.get('id'));
         const deletions = person.get('owns').map(todo => {
-          return todo.destroyRecord()
+          return todo.destroyRecord();
         });
 
         Ember.RSVP.all(deletions)

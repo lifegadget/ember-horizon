@@ -2,7 +2,7 @@ import Ember from 'ember';
 const { inject: {service} } = Ember; // jshint ignore:line
 
 export default Ember.Route.extend({
-  // flashMessage: service(),
+  flashMessages: service(),
 
   model() {
     return this.store.findAll('todo');

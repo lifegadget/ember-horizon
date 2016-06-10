@@ -131,7 +131,6 @@ export default Ember.Service.extend(Watching, {
    */
   collection(state) {
     state = typeOf(state) === 'string' ? {model: state} : state;
-    console.log('collection is: ', state);
     const model = state.model;
     return new Promise((resolve, reject) => {
 
@@ -140,7 +139,6 @@ export default Ember.Service.extend(Watching, {
           if(!this._collections[model]) {
             this._collections[model] = hz(model);
           }
-          console.log(`resolving collection: ${model}`, this._collections[model]);
 
           resolve(Ember.assign(
             { collection: this._collections[model] },
@@ -174,7 +172,7 @@ export default Ember.Service.extend(Watching, {
   find(state) {
     // inputs
     const {collection} = state;
-    const filterBy = state.filterBy || {id: state.id};
+    const filterBy = state.filterBy || state.id;
     // promise
     return new Promise((resolve, reject) => {
 
@@ -185,19 +183,11 @@ export default Ember.Service.extend(Watching, {
         return;
       }
 
-      if (filterBy) {
-        collection.find(filterBy)
-          .then(c2 => {
-            // update state to include collection
-            // with filtered scope
-            state.collection = c2;
-            return resolve(state);
-          })
-          .catch(err => {
-            debug(`Problem running Horizon.find() with given state: `, state);
-            reject(err);
-          });
 
+      if (filterBy) {
+        console.log('finding with filter: ', filterBy);
+        state.collection = collection.find(filterBy);
+        return resolve(state);
       } else {
         reject({code: "find-requires-filter-by"});
       }
@@ -305,7 +295,7 @@ export default Ember.Service.extend(Watching, {
     return new Promise((resolve, reject) => {
 
       collection.remove(id).subscribe(
-        () => resolve(),
+        () => resolve(state),
         err => reject(err)
       );
 

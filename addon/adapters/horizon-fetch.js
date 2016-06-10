@@ -193,7 +193,7 @@ export default Adapter.extend({
 
       horizon.collection(state)
         .then(horizon.remove)
-        .then(s => resolve(s.payload))
+        .then(() => resolve())
         .catch(reject);
 
     }); // return promise
