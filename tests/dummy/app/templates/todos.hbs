@@ -1,0 +1,47 @@
+<h2>TODO's</h2>
+
+<table class='table'>
+  {{#each model as |todo|}}
+    <tr id="todo-{{todo.id}}">
+      <td>
+        {{ui-icon 'trash' pointer=true onClick=(route-action 'deleteTodo' todo.id)}}
+      </td>
+      <td>
+        {{todo.name}}
+      </td>
+      <td>
+        {{todo.due}}
+      </td>
+      <td>
+        {{todo.ownedBy.name}}
+      </td>
+    </tr>
+  {{/each}}
+</table>
+<p>
+  <br>
+</p>
+<h3>Add TODO</h3>
+<form onsubmit={{route-action 'addTodo' }}>
+  <table>
+      <tr>
+        <th>Name / Description</th>
+        <th>Due</th>
+        <th>Owned By</th>
+      </tr>
+      <tr>
+        <td>
+          <input id='todo-name' type="text"  name="name" />
+        </td>
+        <td>
+          <input id='todo-date' type="date" name="due" />
+        </td>
+        <td>
+          {{user-select value=ownedBy}}
+        </td>
+      </tr>
+  </table>
+  <p>
+    <button type="submit" name="button">Add</button>
+  </p>
+</form>

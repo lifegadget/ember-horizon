@@ -1,7 +1,7 @@
 import Ember from 'ember';
 import Adapter from 'ember-data/adapter';
 
-const { RSVP: {Promise}, get, inject: {service}, typeOf } = Ember;
+const { RSVP: {Promise}, get, inject: {service}, typeOf, debug } = Ember;
 
 /**
  * @class HorizonFetchAdapter
@@ -15,75 +15,98 @@ export default Adapter.extend({
   horizon: service(),
 
   // Horizon returns objects as plain JSON.
-  defaultSerializer: 'json',
+  defaultSerializer: '-rest',
 
-  findRecord(store, type, id) {
+  findRecord(store, typeClass, id) {
     const horizon = get(this, 'horizon');
+    const state = {
+      store,
+      type: typeClass,
+      model: typeClass.modelName,
+      id
+    };
+
     return new Promise((resolve, reject) => {
 
       // If subscription exists we assume record already up-to-date
-      if(horizon.isWatched(type)) {
-        resolve( this.peekRecord(type.modelName, id) );
+      if(horizon.isWatched(state.model)) {
+        resolve( this.peekRecord(state.model, id) );
       } else {
-        horizon.collection(type)
-          .then(c => horizon.find(c, id))
+        horizon.collection(state)
+          .then(horizon.find)
           .then(horizon.fetch)
-          .then(horizon.subscribe)
-          .then(resolve)
+          .then(s => resolve(s.payload))
           .catch(reject);
       }
 
     }); // return promise
   },
 
-  findAll(store, type) {
+  findAll(store, typeClass) {
     const horizon = get(this, 'horizon');
+    const state = {
+      store,
+      type: typeClass,
+      model: typeClass.modelName
+    };
+
     return new Promise((resolve, reject) => {
 
-      if (horizon.isWatched(type)) {
-        resolve( this.peekAll(type.modelName) );
+      if (horizon.isWatched(state.model)) {
+        resolve( store.peekAll(state.model) );
       } else {
-        horizon.collection(type)
-          .then(horizon.findAll)
+        horizon.collection(state)
           .then(horizon.fetch)
-          .then(horizon.subscribe)
-          .then(resolve)
+          .then(s => resolve(s.payload))
+          .catch(err => {
+            console.error('problems with findAll', err);
+            reject(err);
+          });
+      }
+
+    }); // return promise
+  },
+
+  findMany(store, typeClass, ids) {
+    const horizon = get(this, 'horizon');
+    const state = {
+      store,
+      type: typeClass,
+      model: typeClass.modelName,
+      ids: ids
+    };
+    return new Promise((resolve, reject) => {
+
+      if (horizon.isWatched(state.model)) {
+        resolve( store.peekAll(state.model, ids) );
+      } else {
+        horizon.collection(state)
+          .then(horizon.findMany)
+          .then(horizon.fetch)
+          .then(s => resolve(s.payload))
           .catch(reject);
       }
 
     }); // return promise
   },
 
-  findMany(store, type, ids) {
+  query(store, typeClass, query) {
     const horizon = get(this, 'horizon');
+    const state = {
+      store,
+      type: typeClass,
+      model: typeClass.modelName,
+      query
+    };
     return new Promise((resolve, reject) => {
 
-      if (horizon.isWatched(type)) {
-        resolve( this.peekAll(type.modelName, ids) );
+      if (horizon.isWatched(state.model)) {
+        resolve( this.peekAll(state.model, state.query) ); // TODO: this may not work with query
       } else {
-        horizon.collection(type)
-          .then(c => horizon.findAll(c, ids))
+        horizon.collection(state)
+          .then(horizon.findMany)
           .then(horizon.fetch)
-          .then(horizon.subscribe)
-          .then(resolve)
-          .catch(reject);
-      }
-
-    }); // return promise
-  },
-
-  query(store, type, query) {
-    const horizon = get(this, 'horizon');
-    return new Promise((resolve, reject) => {
-
-      if (horizon.isWatched(type)) {
-        resolve( this.peekAll(type.modelName, query) );
-      } else {
-        horizon.collection(type)
-          .then(c => horizon.findAll(c, query))
-          .then(horizon.fetch)
-          .then(horizon.subscribe)
-          .then(resolve)
+          .then(s => resolve(s.payload))
           .catch(reject);
       }
 
@@ -92,16 +115,22 @@ export default Adapter.extend({
 
   queryRecord(store, type, query) {
     const horizon = get(this, 'horizon');
+    const state = {
+      store,
+      type,
+      model: type.modelName,
+      query
+    };
+
     return new Promise((resolve, reject) => {
 
-      if (horizon.isWatched(type)) {
-        resolve( this.peekAll(type.modelName, query) ); // TODO: this may not work with query
+      if (horizon.isWatched(state.model)) {
+        resolve( store.peekAll(state.model, state.query) ); // TODO: this may not work with query
       } else {
-        horizon.collection(type)
-          .then(c => horizon.find(c, query))
+        horizon.collection(state)
+          .then(horizon.find)
           .then(horizon.fetch)
-          .then(horizon.subscribe)
-          .then(resolve)
+          .then(s => resolve(s.payload))
           .catch(reject);
       }
 
@@ -110,13 +139,19 @@ export default Adapter.extend({
 
   createRecord(store, type, snapshot) {
     const horizon = get(this, 'horizon');
-    const payload = this.serialize(snapshot);
+    const state = {
+      store,
+      payload: snapshot.serialize(),
+      type,
+      model: type.modelName,
+      snapshot
+    };
+
     return new Promise((resolve, reject) => {
 
-      horizon.collection(type)
-        .then(c => horizon.store(c, payload))
-        .then(horizon.subscribe)
-        .then(resolve)
+      horizon.collection(state)
+        .then(horizon.store)
+        .then(s => resolve(s.payload))
         .catch(reject);
 
     }); // return promise
@@ -124,13 +159,19 @@ export default Adapter.extend({
 
   updateRecord(store, type, snapshot) {
     const horizon = get(this, 'horizon');
-    const payload = this.serialize(snapshot, { includeId: true });
+    const state = {
+      store,
+      payload: snapshot.serialize({ includeId: true }),
+      type,
+      model: type.modelName,
+      snapshot
+    };
+
     return new Promise((resolve, reject) => {
 
-      horizon.collection(type)
-        .then(c => horizon.replace(c, payload))
-        .then(horizon.subscribe)
-        .then(resolve)
+      horizon.collection(state)
+        .then(horizon.replace)
+        .then(s => resolve(s.payload))
         .catch(reject);
 
     }); // return promise
@@ -138,14 +179,83 @@ export default Adapter.extend({
 
   deleteRecord(store, type, snapshot) {
     const horizon = get(this, 'horizon');
-    const id = typeOf(snapshot) === 'class' ? snapshot.id : snapshot;
+    const id = typeOf(snapshot) === 'object' ? snapshot.id : snapshot;
+    const state = {
+      store,
+      type,
+      model: type.modelName,
+      snapshot,
+      id: id
+    };
+
+    console.log(`preparing to delete ${id}`);
     return new Promise((resolve, reject) => {
 
-      horizon.collection(type)
-        .then(c => horizon.remove(c, id))
-        .then(resolve)
+      horizon.collection(state)
+        .then(horizon.remove)
+        .then(() => resolve())
         .catch(reject);
 
     }); // return promise
+  },
+
+  /**
+   * When a findAll is queried against a collection which is
+   * "real-time" then this method will establish a watch for
+   * changes and update the Ember Data store appropriately
+   *
+   * @param  {class} store    The Ember Data store
+   * @param  {mixed} type     The typeClass object or alternatively
+   *                          a string which indicates the collection being watched
+   * @return {void}
+   */
+  _listenForChanges(store, type) {
+    const horizon = this.get('horizon');
+    const model = typeOf(type) === 'string' ? type : type.modelName;
+    if (!horizon.isWatched(model)) {
+      debug(`The model/collection "${model}" was being added as a real-time collection but it is already being watched!`);
+      return;
+    }
+
+    // A model-independant handler
+    const changeHandler = (changes) => {
+      changes.forEach(change => {
+        switch(change.type) {
+          case 'add':
+            const newRecord = store.createRecord(model, change.new_val);
+            newRecord.save()
+              .then(id => {
+                debug(`Listener added new record to "${model}" with an id of ${id}`, change.new_val);
+              })
+              .catch(err => {
+                console.error(`Ran into problems adding record to "${model}":`, err);
+              });
+            break;
+
+          case 'change':
+            const idChanged = change.new_val.id !== change.old_val.id;
+            if (idChanged) {
+              debug(`An existing record of "${model}" with ID ${change.old_val.id} has been changed to a new ID of ${change.new_val.id} somewhere outside this application. You should validate that this is acceptable behaviour.`);
+            }
+            store.findRecord(model, change.old_val.id)
+              .then(record => {
+
+                record.save()
+                  .then(id => {
+                    debug(`Listener added new record to "${model}" with an id of ${id}`, change.new_val);
+                  })
+                  .catch(err => {
+                    console.error(`Ran into problems adding record to "${model}":`, err);
+                  });
+
+              });
+            break;
+
+          } // end switch
+        }); // end forEach
+
+        // deploy handler
+        // horizon.watch(changeHandler, model);
+      };
   },
 });

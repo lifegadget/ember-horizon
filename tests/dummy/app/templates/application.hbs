@@ -1,3 +1,18 @@
-<h2 id="title">Welcome to Ember</h2>
+<div class="container">
+  <h1 id="title">ember-cli-horizon</h1>
 
-{{outlet}}
+  Choose:
+
+  {{#link-to 'index'}}{{ui-icon 'home'}}{{/link-to}} |
+  {{#link-to 'people'}}people{{/link-to}} |
+  {{#link-to 'todos'}}todos{{/link-to}}
+  <span class="right"><a href="/tests"> tests{{ui-icon 'th-list'}}</a></span>
+  <p>
+    <br>
+  </p>
+
+  <hr>
+
+  {{outlet}}
+</div>
+{{flash-message-area}}

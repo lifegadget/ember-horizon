@@ -12,7 +12,7 @@ module.exports = {
     if (type === 'head') {
       var horizonConfig = config['horizon'];
       var protocol = horizonConfig.host.match(/(localhost|127.0.0.1)/) ? 'http://' : 'https://';
-      return '<script src="' + protocol + horizonConfig.host + '/horizon/horizon.js"></script>';
+      return '<script id="client-driver" src="' + protocol + horizonConfig.host + '/horizon/horizon.js"></script>';
     }
   }
 };

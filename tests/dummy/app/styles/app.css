@@ -1,0 +1,22 @@
+body {
+  padding-top: 2em;
+}
+.people {
+  list-style: none;
+}
+.people .remove {
+  font-size: 2em;
+  cursor: pointer;
+}
+
+.mute-text {
+  color: darkgrey;
+}
+
+.right {
+  float: right;
+}
+
+table td {
+  padding: .15em;
+}
