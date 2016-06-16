@@ -1,7 +1,7 @@
 import Ember from 'ember';
 import Adapter from 'ember-data/adapter';
 import RealTimeAdapter from '../mixins/real-time-adapter';
-import logger from '../utils/logger';
+import logger from '../utils/logger'; // jshint ignore:line
 
 const { RSVP: {Promise}, get, inject: {service}, typeOf, assert } = Ember;
 
@@ -29,7 +29,7 @@ export default Adapter.extend(RealTimeAdapter, {
     return new Promise((resolve, reject) => {
 
       // If subscription exists we assume record already up-to-date
-      if(horizon.willWatch(state.model)) {
+      if(horizon.isWatching(state.model)) {
         resolve( this.peekRecord(state.model, id) );
       } else {
         horizon.collection(state)
@@ -47,14 +47,30 @@ export default Adapter.extend(RealTimeAdapter, {
     const state = {
       store,
       type: typeClass,
-      model: typeClass.modelName
+      model: typeClass.modelName,
     };
 
     return new Promise((resolve, reject) => {
 
-      if (horizon.willWatch(state.model)) {
-        resolve( store.peekAll(state.model) );
-      } else {
+      // watch (setup if needed)
+      if (this.configuredForWatch(state)) {
+        if(this.watchActive(state)) {
+          resolve( store.peekAll(state.model) );
+        } else {
+          state.cb = this._watchHandler(state);
+          state.options = {owner: 'ember-data-adapter'};
+          horizon.collection(state)
+            .then(horizon.watch)
+            .then(this.saveSubscription)
+            .then(() => resolve(store.peekAll(state.model)))
+            .catch(err => {
+              console.error(`problems setting up watcher for ${state.model}`);
+              reject(err);
+            });
+        }
+      }
+      // normal fetch operation
+      else {
         horizon.collection(state)
           .then(horizon.fetch)
           .then(s => resolve(s.payload))
@@ -77,7 +93,7 @@ export default Adapter.extend(RealTimeAdapter, {
     };
     return new Promise((resolve, reject) => {
 
-      if (horizon.willWatch(state.model)) {
+      if (horizon.isWatching(state.model)) {
         resolve( store.peekAll(state.model, ids) );
       } else {
         horizon.collection(state)
@@ -103,7 +119,7 @@ export default Adapter.extend(RealTimeAdapter, {
     };
     return new Promise((resolve, reject) => {
 
-      if (horizon.willWatch(state.model)) {
+      if (horizon.isWatching(state.model)) {
         resolve( this.peekAll(state.model, state.query) ); // TODO: this may not work with query
       } else {
         horizon.collection(state)
@@ -127,7 +143,7 @@ export default Adapter.extend(RealTimeAdapter, {
 
     return new Promise((resolve, reject) => {
 
-      if (horizon.willWatch(state.model)) {
+      if (horizon.isWatching(state.model)) {
         resolve( store.peekAll(state.model, state.query) ); // TODO: this may not work with query
       } else {
         horizon.collection(state)

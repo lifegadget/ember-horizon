@@ -1,5 +1,6 @@
 import Ember from 'ember';
 import config from 'ember-get-config';
+import workflow from '../utils/workflow';
 import Watching from '../mixins/watching';
 
 const { RSVP: {Promise}, computed, debug, get, typeOf, $, inject: {service}, assert } = Ember;
@@ -14,23 +15,6 @@ if(window.Horizon) {
 } else {
   console.warn('Horizon client library wasn\'t available. Please be sure that the Horizon server is running.');
 }
-
-/**
- * Helps create a workflow stack for promise chains
- */
-const workflow = function(state, newState) {
-  let wf = state.workflow || [];
-  if (wf) {
-    if(typeOf(wf) !== 'array') {
-      debug('promise workflow was set but to a non-array value: ', wf);
-      wf = [];
-    }
-    wf.push(newState);
-  } else {
-    wf = [ newState ];
-  }
-  return wf;
-};
 
 /**
  * @class Horizon

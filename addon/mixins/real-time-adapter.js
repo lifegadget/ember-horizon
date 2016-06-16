@@ -1,5 +1,7 @@
 import Ember from 'ember';
-const { RSVP: {Promise}, get, inject: {service}, typeOf, debug } = Ember;
+import config from 'ember-get-config';
+
+const { RSVP: {Promise}, typeOf, debug } = Ember;
 
 /**
  * Real Time Adapter Mixin
@@ -8,6 +10,37 @@ const { RSVP: {Promise}, get, inject: {service}, typeOf, debug } = Ember;
  * provide real-time updates
  */
 export default Ember.Mixin.create({
+
+  configuredForWatch(state) {
+    if (config.realTime === true || config.realTime === state.model) {
+      console.log(`${state.model} is configured for watch`);
+      return true;
+    } else {
+      console.log(`${state.model} is NOT configured for watch`);
+      return false;
+    }
+  },
+
+
+  /**
+   * After activating the subscription to a watcher, we save
+   * a record of this subscription
+   */
+  saveSubscription(state) {
+    const { model } = state;
+    this.set(`_subscription-${model}`, state.subscription);
+
+    return Promise.resolve(state);
+  },
+
+  /**
+   * We can check if a given model is activated by looking
+   * at the subscription property.
+   */
+  watchActive(state) {
+    const { model } = state;
+    return this.get(`_subscription-${model}`) ? true : false;
+  },
 
   /**
    * When a findAll is queried against a collection which is
