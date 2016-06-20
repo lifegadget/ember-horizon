@@ -127,7 +127,7 @@ export default Ember.Service.extend(Watching, {
       this.connect()
         .then(() => {
           state.collection = hz(model);
-          state.workflow = workflow(state,'collection');
+          state.workflow = workflow(state, 'collection');
           resolve(state);
         })
         .catch(err => {

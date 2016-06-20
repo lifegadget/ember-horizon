@@ -1,9 +1,7 @@
 import Ember from 'ember';
 import workflow from '../utils/workflow';
 
-const { RSVP: {Promise}, assert, debug, typeOf } = Ember;
-const a = Ember.A;
-const pascalize = thingy => thingy ? Ember.String.capitalize(Ember.String.camelize(thingy)) : thingy;
+const { RSVP: {Promise}, assert, debug } = Ember;
 
 String.prototype.hashCode = function() {
   var hash = 0, i, chr, len;
@@ -16,6 +14,31 @@ String.prototype.hashCode = function() {
   }
   return hash;
 };
+
+/**
+ * Produces a unique ID for a watcher. For most watchers this will just
+ * be the "collection" name but in more advanced query it can be a more
+ * complex string value
+ *
+ * @param  {String} model
+ * @param  {Object} options
+ * @return {String}         the ID for this watcher
+ */
+const getWatcherId = function(model, options) {
+  const addons = [];
+  if(options.raw === false) {
+    addons.push('notraw');
+  }
+  if(options.query) {
+    addons.push(JSON.stringify(options.query).hashCode());
+  }
+  if(options.id) {
+    addons.push(`id-${options.id}`);
+  }
+
+  return addons.length > 0 ? `${model}-${addons.join('-')}` : model;
+};
+
 
 export default Ember.Mixin.create({
   init() {
@@ -68,7 +91,29 @@ export default Ember.Mixin.create({
    * @return {Boolean}
    */
   isWatching(watchId) {
-    return this._watchers.filter(w => w.watchId === watchId).length > 0;
+    return this._watchers[watchId];
+  },
+
+
+  getSubscribers(watcherId) {
+    return this._subscribers[watcherId];
+  },
+
+  addSubscriber(watcherId, state) {
+    const { cb } = state;
+    const newSubscription = {
+      watcherId,
+      cb,
+      index: this._subscribers[watcherId] ? this._subscribers[watcherId].length + 1 : 1
+    };
+    console.log(`adding subsriber to watch ${watcherId}`);
+    if(this._subscribers[watcherId]) {
+      this._subscribers[watcherId].push(newSubscription);
+    } else {
+      this._subscribers[watcherId] = [newSubscription];
+    }
+
+    return this._subscribers[watcherId].length;
   },
 
   /**
@@ -105,23 +150,26 @@ export default Ember.Mixin.create({
    */
   watch(state) {
     // inputs
-    const {collection, model, cb, watcher} = state;
+    const {model, cb, watcher} = state;
     const options = state.options || {};
-    const watcherId = watcher || this.getWatcherId(model, options);
+    const watcherId = watcher || getWatcherId(model, options);
     state.workflow = workflow(state, 'watch');
     // promise (to return current state of collection)
     return new Promise((resolve, reject) => {
 
       // validate cb is available
       if(!cb) {
-        assert('watch called without a callback', this);
+        // assert('watch called without a callback', this);
         reject({
           code: 'no-callback',
           source: 'watch'
         });
+        return;
       }
+
       // watcher exists
       if(this.isWatching(watcherId)) {
+        console.log(`watcher for ${watcherId} already exists`);
         // service already has generalized watcher watching this collection
         // so new request is just attached to the list of subscribers
         state.subscriber = this.addSubscriber(watcherId, state);
@@ -131,9 +179,10 @@ export default Ember.Mixin.create({
         // otherwise we'll need to go back to database
         if(state.store && model === watcherId) {
           state.payload = state.store.peekAll(model);
-          resolve(state);
+          resolve(state.payload);
         } else {
-          this.collection(collection)
+          console.log('watcher does not exist yet');
+          this.collection(state)
             .then(this.findAll)
             .then(s => resolve(s.payload))
             .catch(err => {
@@ -144,34 +193,35 @@ export default Ember.Mixin.create({
       }
       // no watcher yet
       else {
-        const {generalizedCallback, watcherId} = this.createCallback(model, options);
-        state.watcher = watcherId;
-        // note: we can subscribe to watcher even though watcher isn't active yet
-        // in fact that ensures that the first call which gives the current-state is
-        // delivered to the subscriber
+        const {watcher, watcherId} = this.createWatcher(model, options);
+        state.watcherId = watcherId;
+        state.watcher = watcher;
         state.subscriber = this.addSubscriber(watcherId, state);
-        // note: "callback" on `state` is the generalized callback, whereas "cb" is localized
-        state.callback = generalizedCallback;
-        this._watch(state)
-          .then(resolve)
+        // setup watcher
+        this.collection(state)
+          .then(s => this._watch(s) )
           .catch(err => {
             debug(err);
-            assert(`Problems in setting up new watcher for ${watcherId}`, this);
+            assert(`Problems in setting up new watcher for ${watcherId}: ${err}`, this);
             reject(err);
           });
         }
     }); // return promise
   },
 
+  raw: true,
   _watch(state) {
-    const {raw, callback, collection} = state;
+    const { watcher, errHandler, collection } = state;
+    const raw = this.get('raw');
     state.workflow = workflow(state, '_watch');
     return new Promise((resolve, reject) => {
 
       try {
-        state.collection = collection.watch({rawChanges: raw}).subscribe(callback);
+        state.collection = collection
+                            .watch({rawChanges: raw})
+                            .subscribe(watcher, errHandler);
       } catch (e) {
-        debug('Call to Horizon to watch() failed', e);
+        debug('Call to Horizon watch() failed', e);
         reject(e);
       }
       resolve(state);
@@ -179,43 +229,22 @@ export default Ember.Mixin.create({
     }); // return promise
   },
 
-  createCallback(model, options) {
-    const watcherId = this.getWatcherId(model, options);
+  createWatcher(model, options) {
+    const watcherId = getWatcherId(model, options);
     const callback = (changes) => {
-      console.log(`generalized callback for ${watcherId}:`, changes);
       this.getSubscribers(watcherId).forEach(s => s.cb(changes));
     };
+    const errHandler = (err) => {
+      debug(`Error with watcher on ${watcherId}`, err);
+      assert('Stack\n', this);
+    };
+    this._watchers[watcherId] = true;
 
-    return callback;
-  },
-
-  /**
-   * Most watchers have an id where id = collection,
-   * if the watch is using a query of some sort though or not returning
-   * raw input then this function will identify the correct ID for
-   * the watcher
-   *
-   * @param  {String} model
-   * @param  {Object} options
-   * @return {String}         the ID for this watcher
-   */
-  getWatcherId(model, options) {
-    const addons = [];
-    if(options.raw !== true) {
-      addons.push('notraw');
-    }
-    if(options.query) {
-      addons.push(JSON.stringify(options.query).hashCode());
-    }
-    if(options.id) {
-      addons.push(`id-${options.id}`);
-    }
-
-    return addons ? `${model}-${addons.split('-')}` : model;
-  },
-
-  getSubscribers(watcherId) {
-    return this._subscribers.filter(s => s.watcherId === watcherId);
+    return {
+      watcher: callback.bind(this),
+      errorHandler: errHandler.bind(this),
+      watcherId: watcherId
+    };
   },
 
 });

@@ -23,6 +23,7 @@ module.exports = function(environment) {
 
     horizon: {
       host: 'localhost:8181',
+      realTime: ['person']
     }
   };
 

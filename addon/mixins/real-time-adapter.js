@@ -2,6 +2,7 @@ import Ember from 'ember';
 import config from 'ember-get-config';
 
 const { RSVP: {Promise}, typeOf, debug } = Ember;
+const a = Ember.A;
 
 /**
  * Real Time Adapter Mixin
@@ -10,9 +11,21 @@ const { RSVP: {Promise}, typeOf, debug } = Ember;
  * provide real-time updates
  */
 export default Ember.Mixin.create({
+  init() {
+    this._super(...arguments);
+    this.set('subscriptions', {});
+  },
 
+  /**
+   * Determines whether the given DB collection is configured
+   * to be treated as "real-time".
+   *
+   * @param  {object} state   Takes a name/value hash with property of "model"
+   * @return {Boolean}
+   */
   configuredForWatch(state) {
-    if (config.realTime === true || config.realTime === state.model) {
+    const rt = config.horizon ? config.horizon.realTime : false;
+    if (rt === true || a(rt).contains(state.model)) {
       console.log(`${state.model} is configured for watch`);
       return true;
     } else {
@@ -27,41 +40,41 @@ export default Ember.Mixin.create({
    * a record of this subscription
    */
   saveSubscription(state) {
-    const { model } = state;
-    this.set(`_subscription-${model}`, state.subscription);
+    const { model, subscriber } = state;
+    const subscriptions = this.get('subscriptions') || {};
+    subscriptions[model] = subscriber;
+    this.set('subscriptions', Ember.$.extend({},subscriptions));
 
     return Promise.resolve(state);
   },
 
   /**
-   * We can check if a given model is activated by looking
-   * at the subscription property.
+   * Is the Ember-Data adapter actively subscribed to this table
    */
-  watchActive(state) {
+  subscriptionActive(state) {
     const { model } = state;
-    return this.get(`_subscription-${model}`) ? true : false;
+    const { subscriptions } = this.getProperties('subscriptions') || {};
+    return subscriptions[model] ? true : false;
   },
 
   /**
-   * When a findAll is queried against a collection which is
-   * "real-time" then this method will establish a watch for
-   * changes and update the Ember Data store appropriately
+   * Generates a callback handler for recieving changes on a collection.
+   * The input is a "state object" which must contain the following
+   * attributes:
    *
    * @param  {class} store    The Ember Data store
    * @param  {mixed} type     The typeClass object or alternatively
    *                          a string which indicates the collection being watched
    * @return {void}
    */
-  _listenForChanges(store, type) {
-    const horizon = this.get('horizon');
+  generateHandler(state) {
+    const { store, type } = state;
     const model = typeOf(type) === 'string' ? type : type.modelName;
-    if (!horizon.willWatch(model)) {
-      debug(`The model/collection "${model}" was being added as a real-time collection but it is already being watched!`);
-      return;
-    }
 
-    // A model-independant handler
+    // A cross-collection handler, which is parameterized with the
+    // specific collection being added
     const changeHandler = (changes) => {
+      console.log(`handling changes for ${model}: `, changes);
       changes.forEach(change => {
         switch(change.type) {
           case 'add':
@@ -96,9 +109,8 @@ export default Ember.Mixin.create({
 
           } // end switch
         }); // end forEach
-
-        // deploy handler
-        // horizon.watch(changeHandler, model);
       };
+      // return handler
+      return changeHandler.bind(this);
   },
 });

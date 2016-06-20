@@ -28,16 +28,11 @@ export default Adapter.extend(RealTimeAdapter, {
 
     return new Promise((resolve, reject) => {
 
-      // If subscription exists we assume record already up-to-date
-      if(horizon.isWatching(state.model)) {
-        resolve( this.peekRecord(state.model, id) );
-      } else {
-        horizon.collection(state)
-          .then(horizon.find)
-          .then(horizon.fetch)
-          .then(s => resolve(s.payload))
-          .catch(reject);
-      }
+      horizon.collection(state)
+        .then(horizon.find)
+        .then(horizon.fetch)
+        .then(s => resolve(s.payload))
+        .catch(reject);
 
     }); // return promise
   },
@@ -52,33 +47,25 @@ export default Adapter.extend(RealTimeAdapter, {
 
     return new Promise((resolve, reject) => {
 
-      // watch (setup if needed)
-      if (this.configuredForWatch(state)) {
-        if(this.watchActive(state)) {
-          resolve( store.peekAll(state.model) );
-        } else {
-          state.cb = this._watchHandler(state);
-          state.options = {owner: 'ember-data-adapter'};
-          horizon.collection(state)
-            .then(horizon.watch)
-            .then(this.saveSubscription)
-            .then(() => resolve(store.peekAll(state.model)))
-            .catch(err => {
-              console.error(`problems setting up watcher for ${state.model}`);
-              reject(err);
-            });
-        }
-      }
-      // normal fetch operation
-      else {
-        horizon.collection(state)
-          .then(horizon.fetch)
-          .then(s => resolve(s.payload))
-          .catch(err => {
-            console.error(`problems running findAll('${state.model}')`, err);
-            reject(err);
-          });
-      }
+      // Fetch
+      horizon.collection(state)
+        .then(s => horizon.fetch(s))
+        .then(s => resolve(s.payload))
+        .then(() => {
+          // Where needed, register watcher
+          if (this.configuredForWatch(state) && !this.subscriptionActive(state)) {
+            state.cb = this.generateHandler(state);
+            state.options = {owner: 'ember-data-adapter'};
+            return horizon.collection(state)
+              .then(() => horizon.watch(state));
+          } else {
+            return Promise.resolve();
+          }
+        })
+        .catch(err => {
+          console.error(`problems running findAll('${state.model}'): `, err);
+          reject(err);
+        });
 
     }); // return promise
   },
@@ -91,20 +78,17 @@ export default Adapter.extend(RealTimeAdapter, {
       model: typeClass.modelName,
       ids: ids
     };
+    console.log('findMany', ids);
     return new Promise((resolve, reject) => {
 
-      if (horizon.isWatching(state.model)) {
-        resolve( store.peekAll(state.model, ids) );
-      } else {
-        horizon.collection(state)
-          .then(horizon.findMany)
-          .then(horizon.fetch)
-          .then(s => resolve(s.payload))
-          .catch(err => {
-            assert('Error in executing findMany()', this);
-            reject(err);
-          });
-      }
+      horizon.collection(state)
+        .then(horizon.findMany)
+        .then(horizon.fetch)
+        .then(s => resolve(s.payload))
+        .catch(err => {
+          assert('Error in executing findMany()', this);
+          reject(err);
+        });
 
     }); // return promise
   },
@@ -143,15 +127,11 @@ export default Adapter.extend(RealTimeAdapter, {
 
     return new Promise((resolve, reject) => {
 
-      if (horizon.isWatching(state.model)) {
-        resolve( store.peekAll(state.model, state.query) ); // TODO: this may not work with query
-      } else {
-        horizon.collection(state)
-          .then(horizon.find)
-          .then(horizon.fetch)
-          .then(s => resolve(s.payload))
-          .catch(reject);
-      }
+      horizon.collection(state)
+        .then(horizon.find)
+        .then(horizon.fetch)
+        .then(s => resolve(s.payload))
+        .catch(reject);
 
     }); // return promise
   },
@@ -198,6 +178,7 @@ export default Adapter.extend(RealTimeAdapter, {
 
   deleteRecord(store, type, snapshot) {
     const horizon = get(this, 'horizon');
+    snapshot = this.serialize(snapshot, { includeId: true });
     const id = typeOf(snapshot) === 'object' ? snapshot.id : snapshot;
     const state = {
       store,
