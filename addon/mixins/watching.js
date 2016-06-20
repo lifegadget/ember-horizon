@@ -106,13 +106,14 @@ export default Ember.Mixin.create({
       cb,
       index: this._subscribers[watcherId] ? this._subscribers[watcherId].length + 1 : 1
     };
-    console.log(`adding subsriber to watch ${watcherId}`);
+
     if(this._subscribers[watcherId]) {
       this._subscribers[watcherId].push(newSubscription);
     } else {
       this._subscribers[watcherId] = [newSubscription];
     }
 
+    console.log(`adding subscriber to watch ${watcherId}`, this._subscribers[watcherId]);
     return this._subscribers[watcherId].length;
   },
 
@@ -197,6 +198,7 @@ export default Ember.Mixin.create({
         state.watcherId = watcherId;
         state.watcher = watcher;
         state.subscriber = this.addSubscriber(watcherId, state);
+        console.log('Watcher state', state);
         // setup watcher
         this.collection(state)
           .then(s => this._watch(s) )
@@ -217,9 +219,9 @@ export default Ember.Mixin.create({
     return new Promise((resolve, reject) => {
 
       try {
-        state.collection = collection
-                            .watch({rawChanges: raw})
-                            .subscribe(watcher, errHandler);
+        collection
+          .watch({rawChanges: raw})
+          .subscribe(watcher, errHandler);
       } catch (e) {
         debug('Call to Horizon watch() failed', e);
         reject(e);

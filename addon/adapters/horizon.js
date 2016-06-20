@@ -78,7 +78,6 @@ export default Adapter.extend(RealTimeAdapter, {
       model: typeClass.modelName,
       ids: ids
     };
-    console.log('findMany', ids);
     return new Promise((resolve, reject) => {
 
       horizon.collection(state)

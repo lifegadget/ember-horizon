@@ -22,7 +22,7 @@ export default Ember.Route.extend({
       }
     },
     deleteUser(id) {
-      console.log(`deleting user ${id}`);
+      console.log(`deleting user ${id} (and all their todos)`);
       this.store.findRecord('person', id).then(person => {
         const deletions = person.get('owns').map(todo => {
           return todo.destroyRecord();
