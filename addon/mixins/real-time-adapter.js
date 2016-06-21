@@ -1,8 +1,10 @@
 import Ember from 'ember';
 import config from 'ember-get-config';
 
-const { RSVP: {Promise}, typeOf, debug } = Ember;
+const { RSVP: {Promise}, typeOf } = Ember;
 const a = Ember.A;
+
+// https://github.com/emberjs/data/issues/4262
 const AVOID_DUP_DELAY = 100;
 
 /**
@@ -27,10 +29,8 @@ export default Ember.Mixin.create({
   configuredForWatch(state) {
     const rt = config.horizon ? config.horizon.realTime : false;
     if (rt === true || a(rt).contains(state.model)) {
-      console.log(`${state.model} is configured for watch`);
       return true;
     } else {
-      console.log(`${state.model} is NOT configured for watch`);
       return false;
     }
   },
@@ -45,7 +45,6 @@ export default Ember.Mixin.create({
     const subscriptions = this.get('subscriptions') || {};
     subscriptions[model] = subscriber;
     this.set('subscriptions', Ember.$.extend({},subscriptions));
-    console.log('subscriptions are: ', this.get('subscriptions'));
 
     return Promise.resolve(state);
   },
@@ -75,7 +74,6 @@ export default Ember.Mixin.create({
 
     // A per-collection change handler
     const changeHandler = (change) => {
-      console.log(`handling changes for ${model}: `, change);
         switch(change.type) {
           case 'add':
             const payload = store.normalize(model, change.new_val);
@@ -83,18 +81,15 @@ export default Ember.Mixin.create({
               if(!store.hasRecordForId(model, payload.id)) {
                 store.push(payload);
               }
-              console.log('back from push');
             }, AVOID_DUP_DELAY);
             break;
 
           case 'change':
-            console.log(`changing ${model} ${change.new_val.id}: `, change.new_val);
-            store.pushPayload(model, change.new_val);
-            console.log('BACK FROM CHANGE');
+            const changedRecord = store.normalize(model, change.new_val);
+            store.push(changedRecord);
             break;
 
           case 'remove':
-            console.log(`removing ${change.old_val.id} from ${model}`);
             const record = store.peekRecord(model, change.old_val.id);
             if(record) {
               if(record.get('hasDirtyAttributes')) {

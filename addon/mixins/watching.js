@@ -174,7 +174,7 @@ export default Ember.Mixin.create({
 
       // watcher exists
       if(this.isWatching(watcherId)) {
-        console.log(`watcher for ${watcherId} already exists`);
+        debug(`watcher for ${watcherId} already exists`);
         // service already has a watcher so all that's needed is to
         // to add a new subscriber
         state.subscriber = this.addSubscriber(watcherId, state);
@@ -224,7 +224,6 @@ export default Ember.Mixin.create({
   createWatcher(model, options) {
     const watcherId = getWatcherId(model, options);
     const callback = (changes) => {
-      console.log(changes);
       this.getSubscribers(watcherId).forEach(s => s.cb(changes));
     };
     const errHandler = (err) => {

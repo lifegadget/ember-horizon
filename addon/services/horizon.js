@@ -22,8 +22,6 @@ if(window.Horizon) {
  * Service methods for interacting with Horizon
  */
 export default Ember.Service.extend(Watching, {
-  // Ember-data
-  eds: service('store'),
   // Observable members
   currentUser: null,    // set by Horizon Observable
   status: 'unconnected',// set by Horizon Observable
@@ -266,7 +264,6 @@ export default Ember.Service.extend(Watching, {
     // promise
     return new Promise((resolve, reject) => {
 
-      console.log('replacing record: ', payload);
       collection.replace(payload).subscribe(
         id => resolve(id),
         err => reject(err)
