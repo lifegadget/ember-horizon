@@ -55,7 +55,7 @@ export default Adapter.extend(RealTimeAdapter, {
           // Where needed, register watcher
           if (this.configuredForWatch(state) && !this.subscriptionActive(state)) {
             state.cb = this.generateHandler(state);
-            state.options = {owner: 'ember-data-adapter'};
+            state.options = {name: 'ember-data-adapter'};
             return horizon.collection(state)
               .then(() => horizon.watch(state));
           } else {

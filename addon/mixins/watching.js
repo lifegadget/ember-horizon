@@ -104,7 +104,8 @@ export default Ember.Mixin.create({
     const newSubscription = {
       watcherId,
       cb,
-      index: this._subscribers[watcherId] ? this._subscribers[watcherId].length + 1 : 1
+      index: this._subscribers[watcherId] ? this._subscribers[watcherId].length + 1 : 1,
+      name: state.options.name || 'unknown'
     };
 
     if(this._subscribers[watcherId]) {
@@ -171,26 +172,11 @@ export default Ember.Mixin.create({
       // watcher exists
       if(this.isWatching(watcherId)) {
         console.log(`watcher for ${watcherId} already exists`);
-        // service already has generalized watcher watching this collection
-        // so new request is just attached to the list of subscribers
+        // service already has a watcher so all that's needed is to
+        // to add a new subscriber
         state.subscriber = this.addSubscriber(watcherId, state);
         state.watcher = watcherId;
-        // we still need to return the current state of the
-        // collection. If a "store" exists then we can use ED's peekRecord
-        // otherwise we'll need to go back to database
-        if(state.store && model === watcherId) {
-          state.payload = state.store.peekAll(model);
-          resolve(state.payload);
-        } else {
-          console.log('watcher does not exist yet');
-          this.collection(state)
-            .then(this.findAll)
-            .then(s => resolve(s.payload))
-            .catch(err => {
-              assert(`Failed to execute a findAll() after attaching a subscriber[${state.subscriber}] to a watcher[${state.watcher}]`, err);
-              reject(err);
-            });
-        }
+        resolve(state);
       }
       // no watcher yet
       else {
@@ -201,7 +187,7 @@ export default Ember.Mixin.create({
         console.log('Watcher state', state);
         // setup watcher
         this.collection(state)
-          .then(s => this._watch(s) )
+          .then( s => this._addNewWatcher(s) )
           .catch(err => {
             debug(err);
             assert(`Problems in setting up new watcher for ${watcherId}: ${err}`, this);
@@ -212,10 +198,10 @@ export default Ember.Mixin.create({
   },
 
   raw: true,
-  _watch(state) {
+  _addNewWatcher(state) {
     const { watcher, errHandler, collection } = state;
     const raw = this.get('raw');
-    state.workflow = workflow(state, '_watch');
+    state.workflow = workflow(state, '_addNewWatcher');
     return new Promise((resolve, reject) => {
 
       try {
