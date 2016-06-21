@@ -3,6 +3,7 @@ import config from 'ember-get-config';
 
 const { RSVP: {Promise}, typeOf, debug } = Ember;
 const a = Ember.A;
+const AVOID_DUP_DELAY = 100;
 
 /**
  * Real Time Adapter Mixin
@@ -72,51 +73,37 @@ export default Ember.Mixin.create({
     const { store, type } = state;
     const model = typeOf(type) === 'string' ? type : type.modelName;
 
-    // A cross-collection handler, which is parameterized with the
-    // specific collection being added
+    // A per-collection change handler
     const changeHandler = (change) => {
       console.log(`handling changes for ${model}: `, change);
-      // changes.forEach(change => {
         switch(change.type) {
           case 'add':
-            const findRecord = store.peekRecord(model, change.new_val.id);
-            console.log('found record: ', findRecord);
-            if(!findRecord) {
-              try {
-                const payload = {[model]: change.new_val };
-                console.log('about to save: ', payload);
-                store.pushPayload(model, payload);
-                console.log('back from push');
-              } catch(e) {
-                console.error(e);
+            const payload = store.normalize(model, change.new_val);
+            Ember.run.later(() => {
+              if(!store.hasRecordForId(model, payload.id)) {
+                store.push(payload);
               }
-
-            } else {
-              console.log('ignoring');
-            }
+              console.log('back from push');
+            }, AVOID_DUP_DELAY);
             break;
 
           case 'change':
-            const idChanged = change.new_val.id !== change.old_val.id;
-            if (idChanged) {
-              debug(`An existing record of "${model}" with ID ${change.old_val.id} has been changed to a new ID of ${change.new_val.id} somewhere outside this application. You should validate that this is acceptable behaviour.`);
-            }
-            store.findRecord(model, change.old_val.id)
-              .then(record => {
-
-                record.save()
-                  .then(id => {
-                    debug(`Listener added new record to "${model}" with an id of ${id}`, change.new_val);
-                  })
-                  .catch(err => {
-                    console.error(`Ran into problems adding record to "${model}":`, err);
-                  });
-
-              });
+            console.log(`changing ${model} ${change.new_val.id}: `, change.new_val);
+            store.pushPayload(model, change.new_val);
+            console.log('BACK FROM CHANGE');
             break;
 
+          case 'remove':
+            console.log(`removing ${change.old_val.id} from ${model}`);
+            const record = store.peekRecord(model, change.old_val.id);
+            if(record) {
+              if(record.get('hasDirtyAttributes')) {
+                record.rollbackAttributes();
+              }
+              store.unloadRecord(record);
+            }
+
           } // end switch
-        // }); // end forEach
       };
       // return handler
       return changeHandler.bind(this);
