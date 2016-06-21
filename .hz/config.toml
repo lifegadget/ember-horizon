@@ -71,11 +71,11 @@ project_name = "ember_cli_horizon"
 token_secret = "iCeALI4bvz2F9KWV8hAl3RUU38TVA2UGJ3k5qLF3b7qGyYIVyv/3WmCLNpQ/WkowOlNeviS5FxdInqACs3D3tg=="
 # allow_anonymous = false
 # allow_unauthenticated = false
-# auth_redirect = "/"
+# auth_redirect = "/people"
 #
-# [auth.facebook]
-# id = "000000000000000"
-# secret = "00000000000000000000000000000000"
+[auth.facebook]
+# id = "1747626888783351"
+# secret = "db117f49106036d415c158349d457214"
 #
 # [auth.google]
 # id = "00000000000-00000000000000000000000000000000.apps.googleusercontent.com"

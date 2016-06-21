@@ -1,7 +1,11 @@
 import Ember from 'ember';
 import workflow from '../utils/workflow';
+import config from 'ember-get-config';
 
-const { RSVP: {Promise}, assert, debug } = Ember;
+const { RSVP: {Promise}, assert, debug, get } = Ember;
+const hzConfig = get(config, 'horizon');
+const hz = window.Horizon(hzConfig);
+
 
 String.prototype.hashCode = function() {
   var hash = 0, i, chr, len;
@@ -96,7 +100,7 @@ export default Ember.Mixin.create({
 
 
   getSubscribers(watcherId) {
-    return this._subscribers[watcherId];
+    return this._subscribers[watcherId] ? this._subscribers[watcherId] : [];
   },
 
   addSubscriber(watcherId, state) {
@@ -180,14 +184,16 @@ export default Ember.Mixin.create({
       }
       // no watcher yet
       else {
-        const {watcher, watcherId} = this.createWatcher(model, options);
+        const {watcher, watcherId, errHandler} = this.createWatcher(model, options);
         state.watcherId = watcherId;
         state.watcher = watcher;
+        state.errHandler = errHandler;
         state.subscriber = this.addSubscriber(watcherId, state);
         console.log('Watcher state', state);
         // setup watcher
         this.collection(state)
           .then( s => this._addNewWatcher(s) )
+          .then( () => resolve(state) )
           .catch(err => {
             debug(err);
             assert(`Problems in setting up new watcher for ${watcherId}: ${err}`, this);
@@ -205,6 +211,7 @@ export default Ember.Mixin.create({
     return new Promise((resolve, reject) => {
 
       try {
+        console.log('watcher: ', watcher);
         collection
           .watch({rawChanges: raw})
           .subscribe(watcher, errHandler);
@@ -220,6 +227,7 @@ export default Ember.Mixin.create({
   createWatcher(model, options) {
     const watcherId = getWatcherId(model, options);
     const callback = (changes) => {
+      console.log(changes);
       this.getSubscribers(watcherId).forEach(s => s.cb(changes));
     };
     const errHandler = (err) => {

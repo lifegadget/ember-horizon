@@ -8,7 +8,7 @@ const { RSVP: {Promise}, computed, debug, get, typeOf, $, inject: {service}, ass
 // The horizon object with configuration from users ENV
 // Note: often the DEV environment will be left blank
 // and rather than just let it
-const hzConfig = config.horizon || {};
+const hzConfig = get(config, 'horizon') || {};
 let hz;
 if(window.Horizon) {
   hz = window.Horizon(hzConfig);
@@ -169,7 +169,6 @@ export default Ember.Service.extend(Watching, {
       }
 
       if (filterBy) {
-        console.log('finding with filter: ', filterBy);
         state.collection = collection.find(filterBy);
         state.workflow = workflow(state,'find');
         return resolve(state);

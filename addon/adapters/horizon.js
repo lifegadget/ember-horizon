@@ -3,7 +3,7 @@ import Adapter from 'ember-data/adapter';
 import RealTimeAdapter from '../mixins/real-time-adapter';
 import logger from '../utils/logger'; // jshint ignore:line
 
-const { RSVP: {Promise}, get, inject: {service}, typeOf, assert } = Ember;
+const { RSVP: {Promise}, debug, get, inject: {service}, typeOf, assert } = Ember;
 
 /**
  * @class HorizonFetchAdapter
@@ -57,7 +57,11 @@ export default Adapter.extend(RealTimeAdapter, {
             state.cb = this.generateHandler(state);
             state.options = {name: 'ember-data-adapter'};
             return horizon.collection(state)
-              .then(() => horizon.watch(state));
+              .then(() => horizon.watch(state))
+              .then( s => this.saveSubscription(s) )
+              .catch(err => {
+                debug(`Problem setting up watch for ${state.model}.`, err);
+              });
           } else {
             return Promise.resolve();
           }

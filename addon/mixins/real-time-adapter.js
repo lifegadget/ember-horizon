@@ -44,6 +44,7 @@ export default Ember.Mixin.create({
     const subscriptions = this.get('subscriptions') || {};
     subscriptions[model] = subscriber;
     this.set('subscriptions', Ember.$.extend({},subscriptions));
+    console.log('subscriptions are: ', this.get('subscriptions'));
 
     return Promise.resolve(state);
   },
@@ -73,19 +74,26 @@ export default Ember.Mixin.create({
 
     // A cross-collection handler, which is parameterized with the
     // specific collection being added
-    const changeHandler = (changes) => {
-      console.log(`handling changes for ${model}: `, changes);
-      changes.forEach(change => {
+    const changeHandler = (change) => {
+      console.log(`handling changes for ${model}: `, change);
+      // changes.forEach(change => {
         switch(change.type) {
           case 'add':
-            const newRecord = store.createRecord(model, change.new_val);
-            newRecord.save()
-              .then(id => {
-                debug(`Listener added new record to "${model}" with an id of ${id}`, change.new_val);
-              })
-              .catch(err => {
-                console.error(`Ran into problems adding record to "${model}":`, err);
-              });
+            const findRecord = store.peekRecord(model, change.new_val.id);
+            console.log('found record: ', findRecord);
+            if(!findRecord) {
+              try {
+                const payload = {[model]: change.new_val };
+                console.log('about to save: ', payload);
+                store.pushPayload(model, payload);
+                console.log('back from push');
+              } catch(e) {
+                console.error(e);
+              }
+
+            } else {
+              console.log('ignoring');
+            }
             break;
 
           case 'change':
@@ -108,7 +116,7 @@ export default Ember.Mixin.create({
             break;
 
           } // end switch
-        }); // end forEach
+        // }); // end forEach
       };
       // return handler
       return changeHandler.bind(this);
