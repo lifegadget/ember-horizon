@@ -5,6 +5,7 @@ module('Unit | Utility | workflow');
 
 // Replace this with your real tests.
 test('it works', function(assert) {
-  let result = workflow();
+  let state = {};
+  let result = workflow(state, 'get-this-party-started');
   assert.ok(result);
 });

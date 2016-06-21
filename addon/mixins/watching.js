@@ -1,11 +1,7 @@
 import Ember from 'ember';
 import workflow from '../utils/workflow';
-import config from 'ember-get-config';
 
-const { RSVP: {Promise}, assert, debug, get } = Ember;
-const hzConfig = get(config, 'horizon');
-const hz = window.Horizon(hzConfig);
-
+const { RSVP: {Promise}, assert, debug } = Ember;
 
 String.prototype.hashCode = function() {
   var hash = 0, i, chr, len;

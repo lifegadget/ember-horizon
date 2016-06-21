@@ -3,7 +3,7 @@ import config from 'ember-get-config';
 import workflow from '../utils/workflow';
 import Watching from '../mixins/watching';
 
-const { RSVP: {Promise}, computed, debug, get, typeOf, $, inject: {service}, assert } = Ember;
+const { RSVP: {Promise}, computed, debug, get, typeOf, $, assert } = Ember;
 
 // The horizon object with configuration from users ENV
 // Note: often the DEV environment will be left blank
