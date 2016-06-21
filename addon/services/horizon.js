@@ -4,10 +4,6 @@ import workflow from '../utils/workflow';
 import Watching from '../mixins/watching';
 
 const { RSVP: {Promise}, computed, debug, get, typeOf, $, assert } = Ember;
-
-// The horizon object with configuration from users ENV
-// Note: often the DEV environment will be left blank
-// and rather than just let it
 const hzConfig = get(config, 'horizon') || {};
 let hz;
 if(window.Horizon) {
@@ -29,10 +25,8 @@ export default Ember.Service.extend(Watching, {
   raw: true,            // specifies detail/structure in watched changes (true = RethinkDB changestream)
 
   willDestroy() {
-    this._watching.forEach(s => s.unsubscribe());
-    this._subscriptions.forEach(s => s.unsubscribe()); // TODO: understand lifecycle better
-    this.disconnect();
     this._super(...arguments);
+    this.disconnect();
   },
 
   connect() {
