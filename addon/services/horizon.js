@@ -1,13 +1,10 @@
 import Ember from 'ember';
 import config from 'ember-get-config';
+import workflow from '../utils/workflow';
 import Watching from '../mixins/watching';
 
-const { RSVP: {Promise}, computed, debug, get, typeOf, $, inject: {service} } = Ember;
-
-// The horizon object with configuration from users ENV
-// Note: often the DEV environment will be left blank
-// and rather than just let it
-const hzConfig = config.horizon || {};
+const { RSVP: {Promise}, computed, debug, get, typeOf, $, assert } = Ember;
+const hzConfig = get(config, 'horizon') || {};
 let hz;
 if(window.Horizon) {
   hz = window.Horizon(hzConfig);
@@ -21,27 +18,15 @@ if(window.Horizon) {
  * Service methods for interacting with Horizon
  */
 export default Ember.Service.extend(Watching, {
-  // Ember-data
-  eds: service('store'),
   // Observable members
   currentUser: null,    // set by Horizon Observable
   status: 'unconnected',// set by Horizon Observable
   hasAuthToken: null,   // set by Horizon Observable
   raw: true,            // specifies detail/structure in watched changes (true = RethinkDB changestream)
 
-  init() {
-    this._super(...arguments);
-    this._collections = []; // TODO: check whether Horizon does collection caching for you
-    this._subscriptions = [];
-    this._watching = [];
-    this._registeredWatchers = [];
-  },
-
   willDestroy() {
-    this._watching.forEach(s => s.unsubscribe());
-    this._subscriptions.forEach(s => s.unsubscribe()); // TODO: understand lifecycle better
-    this.disconnect();
     this._super(...arguments);
+    this.disconnect();
   },
 
   connect() {
@@ -59,8 +44,6 @@ export default Ember.Service.extend(Watching, {
             hz.onReady(() => {
               this.set('status', 'ready');
               debug('Horizon connected');
-              // this._statusObservable();
-              // this._currentUserObservable();
               resolve();
             });
             hz.onDisconnected(() => {
@@ -71,7 +54,6 @@ export default Ember.Service.extend(Watching, {
               this._socketError();
               reject({code: 'socket-error'});
             });
-
           })
           .catch(() => {
             // client driver failed
@@ -136,17 +118,12 @@ export default Ember.Service.extend(Watching, {
 
       this.connect()
         .then(() => {
-          if(!this._collections[model]) {
-            this._collections[model] = hz(model);
-          }
-
-          resolve(Ember.assign(
-            { collection: this._collections[model] },
-            state
-          ));
+          state.collection = hz(model);
+          state.workflow = workflow(state, 'collection');
+          resolve(state);
         })
         .catch(err => {
-          console.error(`Problem connecting to Horizon server: `, err);
+          console.error(`Problem getting "${model}" collection: `, err);
           reject(err);
         });
 
@@ -183,10 +160,9 @@ export default Ember.Service.extend(Watching, {
         return;
       }
 
-
       if (filterBy) {
-        console.log('finding with filter: ', filterBy);
         state.collection = collection.find(filterBy);
+        state.workflow = workflow(state,'find');
         return resolve(state);
       } else {
         reject({code: "find-requires-filter-by"});
@@ -197,27 +173,29 @@ export default Ember.Service.extend(Watching, {
 
   findMany(state) {
     // inputs
-    const {collection, filterBy} = state;
-    const query = filterBy.map(f => {
+    const {collection} = state;
+    const filterBy = (state.findBy || state.ids || []).map(f => {
       return typeOf(f) === 'object' ? f : {id: f};
     });
+    state.filterBy = filterBy;
     // promise
     return new Promise((resolve, reject) => {
+      if(!collection) {
+        const message = `Horizon "find" called but state didn't have collection property`;
+        assert(message, this);
+        reject({code: 'no-collection-property', message: message});
+        return;
+      }
 
       if (filterBy) {
-        collection.findAll(...query)
-          .then(c2 => {
-            // update state to include collection
-            // with filtered scope from filterBy query
-            state.collection = c2;
-            return resolve(state);
-          })
-          .catch(err => {
-            debug(`Problem running Horizon.findMany() with given state: `, state);
-            reject(err);
-          });
+        // update state to include collection
+        // with filtered scope from filterBy query
+        const c2 = collection.findAll(...filterBy);
+        state.collection = c2;
+        state.workflow = workflow(state,'findMany');
+        resolve(state);
       } else {
-        reject({code: "find-requires-filter-by"});
+        reject({code: "find-requires-filter-criteria", state: state});
       }
 
     }); // return promise
@@ -236,10 +214,10 @@ export default Ember.Service.extend(Watching, {
     // promise
     return new Promise((resolve, reject) => {
 
-      console.log('fetching: ', state);
       collection.fetch().subscribe(
         result => {
-          state = Ember.assign({payload: result}, state);
+          state.workflow = workflow(state, 'fetch');
+          state.payload = result;
           resolve(state);
         },
         err => reject(err)
@@ -258,6 +236,7 @@ export default Ember.Service.extend(Watching, {
       collection.store(payload).subscribe(
         serverProperties => {
           state.payload = Ember.assign(payload, serverProperties);
+          state.workflow = workflow(state, 'store');
           resolve(state);
         },
         err => reject(err)
@@ -279,7 +258,6 @@ export default Ember.Service.extend(Watching, {
     // promise
     return new Promise((resolve, reject) => {
 
-      console.log('replacing record: ', payload);
       collection.replace(payload).subscribe(
         id => resolve(id),
         err => reject(err)
@@ -295,7 +273,10 @@ export default Ember.Service.extend(Watching, {
     return new Promise((resolve, reject) => {
 
       collection.remove(id).subscribe(
-        () => resolve(state),
+        () => {
+          state.workflow = workflow(state, 'remove');
+          resolve(state);
+        },
         err => reject(err)
       );
 
