@@ -1,0 +1,37 @@
+<h2>People</h2>
+
+
+
+<table class="table">
+  {{#each model as |p|}}
+    <tr id="row-{{p.id}}">
+      <td>
+        {{ui-icon 'trash' pointer=true onClick=(route-action 'deleteUser' p.id)}}
+      </td>
+      <td>
+        {{p.name}}
+      </td>
+      <td>
+        {{#if p.owns}}
+          {{#each p.owns as |todo|}}
+            <span class="person-todo">{{todo.name}}<br> </span>
+          {{/each}}
+        {{else}}
+          <span class="mute-text">(doesn't own any TODO's)</span>
+        {{/if}}
+      </td>
+    </tr>
+  {{/each}}
+</table>
+
+
+<p>
+  <br>
+</p>
+<h3>Add Person</h3>
+<p>
+  <form class="user-form">
+    <input id='addUser' type='text' name='name' autocomplete="off" />
+    <button onclick={{route-action 'addUser'}}> Add </button>
+  </form>
+</p>

@@ -35,14 +35,15 @@
   "author": "Kyle Jones <kyle@jonesetc.com>",
   "license": "MIT",
   "devDependencies": {
-    "@horizon/client": "^1.0.3",
+    "bootstrap": "4.0.0-alpha.2",
     "broccoli-asset-rev": "^2.4.2",
-    "bufferutil": "^1.2.1",
+    "chalk": "1.1.3",
+    "demo-helper": "0.2.13",
     "ember-ajax": "0.7.1",
-    "ember-browserify": "^1.1.9",
     "ember-cli": "2.5.1",
     "ember-cli-app-version": "^1.0.0",
     "ember-cli-dependency-checker": "^1.2.0",
+    "ember-cli-flash": "1.3.15",
     "ember-cli-htmlbars": "^1.0.3",
     "ember-cli-htmlbars-inline-precompile": "^0.3.1",
     "ember-cli-inject-live-reload": "^1.4.0",
@@ -54,12 +55,15 @@
     "ember-data": "^2.5.0",
     "ember-disable-prototype-extensions": "^1.1.0",
     "ember-export-application-global": "^1.0.5",
-    "ember-get-config": "0.0.3",
     "ember-load-initializers": "^0.5.1",
     "ember-resolver": "^2.0.3",
+    "ember-route-action-helper": "^0.3.1",
     "ember-try": "^0.2.2",
     "loader.js": "^4.0.1",
-    "utf-8-validate": "^1.2.1"
+    "ui-bootstrap": "0.1.1",
+    "ui-icon": "0.10.4",
+    "ui-markdown": "0.1.7",
+    "ui-navigator-service": "0.3.1"
   },
   "keywords": [
     "ember-addon",
@@ -70,6 +74,7 @@
     "ember-data-adapter"
   ],
   "dependencies": {
+    "ember-get-config": "0.0.3",
     "chalk": "^1.1.3",
     "ember-cli-babel": "^5.1.6"
   },

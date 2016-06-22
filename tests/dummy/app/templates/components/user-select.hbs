@@ -1,0 +1,5 @@
+<select name="user" id='person-id'  onchange={{action 'selected'}}>
+  {{#each people as |u|}}
+    <option value={{u.id}}>{{u.name}}</option>
+  {{/each}}
+</select>

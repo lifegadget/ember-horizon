@@ -15,3 +15,8 @@
 /libpeerconnection.log
 npm-debug.log
 testem.log
+tests/dummy/rethinkdb_data/*
+.tag*
+
+rethinkdb_data/*
+.hz/*
