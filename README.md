@@ -1,4 +1,4 @@
-# Ember-cli-horizon
+# ember-cli-horizon
 
 [![npm](https://img.shields.io/npm/v/ember-cli-horizon.svg)](https://www.npmjs.com/package/ember-cli-horizon)
 [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/jonesetc/ember-cli-horizon/master/LICENSE.md)
@@ -23,7 +23,7 @@ You're application is now ready to work against a Horizon server (and Rethink da
 npm install -g horizon
 ```
 
-Installing the ReThink Database is a bit varied by operating system but straight forward. Use this link to install for your OS: 
+Installing the ReThink Database is a bit varied by operating system but straight forward. Use this link to install for your OS:
 [starting the server](http://horizon.io/docs/getting-started/#start-the-server).
 
 Once both are installed, you're ready to start:
@@ -120,37 +120,24 @@ config/environment.js
 > valid authType's are _unauthenticated, _anonymous_, and _token_ where "token" implies using a 3rd party provider (google, facebook, etc.) that has appropriate server configuration
 
 
-### Referential Integrity
+### License
 
-Ember model's act as a client-side contract to both the attributes and relationships that a given entity has. In the case of relationships, however, Ember Data does not by itself enforce referential integrity. As an example, given the two models below:
+Copyright (c) 2016 LifeGadget Ltd
 
-```js
-// todo model
-export default Model.extend({
-  name: attr('string'),
-  due: attr('string'),
-  ownedBy: belongsTo('person', {inverse: 'owns'})
-});
-// person model
-export default Model.extend({
-  name: attr('string'),
-  owns: hasMany('todo', {inverse: 'ownedBy'})
-});
-```
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the "Software"), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+of the Software, and to permit persons to whom the Software is furnished to do
+so, subject to the following conditions:
 
-- Use Case 1
-  - You add a new TODO and while doing so you set the "belongsTo" relationship `ownedBy` a known Person record
-  - Now the TODO correctly points to the owner of the TODO, but ...
-  - The explicitly stated "inverse" -- Person's `owns` relationship -- is not aware of the change.
-- Use Case 2
-  - You delete a Person who has several TODO's assigned to them
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
 
-## Warnings and shortcomings
-
-- This is currently a work in progress.
-    - The fetch adapter and connection should work just fine for basic use cases.
-    - I would appreciate any beta testing and feedback.
-- There is a streaming adapter in progress, but it is not available yet.
-- There are no tests.
-    - I still need to figure out just how I'm going to set up automated testing against a real horizon instance.
-    - I'm brainstorming on solutions, I promise.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
