@@ -1,11 +1,18 @@
 ---
 language: node_js
 node_js:
-  - "5"
+  - "6"
   - "4"
-  - "0.12"
 
 sudo: true
+dist: trusty
+
+addons:
+  apt:
+    sources:
+      - google-chrome
+    packages:
+      - google-chrome-stable
 
 cache:
   directories:
@@ -13,18 +20,9 @@ cache:
 
 env:
   - EMBER_TRY_SCENARIO=default
-  - EMBER_TRY_SCENARIO=ember-1.13
   - EMBER_TRY_SCENARIO=ember-release
   - EMBER_TRY_SCENARIO=ember-beta
   - EMBER_TRY_SCENARIO=ember-canary
-  - CXX=g++-4.8
-
-addons:
-  apt:
-    sources:
-      - ubuntu-toolchain-r-test
-    packages:
-      - g++-4.8
 
 matrix:
   fast_finish: true
@@ -32,22 +30,19 @@ matrix:
     - env: EMBER_TRY_SCENARIO=ember-canary
 
 before_install:
-  - source /etc/lsb-release && echo "deb http://download.rethinkdb.com/apt $DISTRIB_CODENAME main" | sudo tee /etc/apt/sources.list.d/rethinkdb.list
-  - wget -qO- https://download.rethinkdb.com/apt/pubkey.gpg | sudo apt-key add -
-  - sudo apt-get update -o Dir::Etc::sourcelist="/etc/apt/sources.list.d/rethinkdb.list" -o Dir::Etc::sourceparts="-" -o APT::Get::List-Cleanup="0"
-  - sudo apt-get install rethinkdb
-  - export PATH=/usr/local/phantomjs-2.0.0/bin:$PATH
-  - "npm config set spin false"
-  # - "npm install -g npm@^2"
+  - "export DISPLAY=:99.0"
+  - "sh -e /etc/init.d/xvfb start"
+  - sleep 2 # give xvfb some time to start
+  - "npm config set progress false"
+  - "npm install -g npm@^3"
 
 install:
   - npm install -g bower
-  - npm install -g horizon
   - npm install
   - bower install
 
-after_install:
-  - $(cd demo_hz; horizon serve --dev)
-
 script:
   - ember try $EMBER_TRY_SCENARIO test
+
+notifications:
+  slack: lifegadget:mtokkpY5lTA2adgCqWtgCGln
