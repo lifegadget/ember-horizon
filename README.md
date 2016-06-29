@@ -63,7 +63,7 @@ Ok, you're done with the configuring the adapter.
 
 ### Real Time
 
-ReThink DB -- like Firebase -- is a "real time database" which means that immediately following a change on the server, clients can be immediately updated with "subscritions" to those changes they're interested in. By default this addon will turn on this real-time feature for each model in your application but this is entirely configurable. What this means in practice is that when your application calls `store.findAll()` for a particular model that model will "subscribe" to all future changes. This lazy loading strategy ensures you get active updates on models which you are being used while not paying the cost of getting updates to models that are not.
+ReThink DB -- like Firebase -- is a "real time database" which means that immediately following a change on the server, clients can be immediately updated with "subscriptions" to those changes they're interested in. By default this addon will turn this real-time feature on for each model in your application but this is entirely configurable. What this means in practice is that when your application calls `store.findAll()` for a particular model that model will "subscribe" to all future changes. This lazy loading strategy ensures you get active updates on models which are being used while not paying the cost of getting updates to models that are not. It's good to be lazy.
 
 This approach is the default but you can manage this in your `config/environment.js` file by changing the `horizon.realTime` variable. This variable can take the following values:
 
@@ -76,7 +76,7 @@ All of these options relate to how the Horizon _adapter_ will behave. For most o
 
 ### Horizon Service
 
-The Horizon service -- which is used by the adapter to due to do it's job -- has a number of useful public interfaces you can leverage; here's a quick summary but source code also is commented if you want to dig into it:
+The Horizon service has a number of useful public interfaces you can leverage; here's a quick summary but source code also is commented if you want to dig into it:
 
 #### Discovery
 
@@ -95,9 +95,7 @@ In most cases this will be done for you transparently but if you ever need them 
 
 #### Watching
 
-- `watch(cb, collection, options)` - allows you to setup a changestream to a collection, document, or query
-- `willWatch(type)` - returns a boolean flag indicating whether the given "changestream" watcher is in place. Typically "type" would be the name of the collection/model but in more complex query-based changestream's you'll need to rely on _id_ passed back by `watch()`
-
+- `watch()` - allows you to setup a _changestream_ to a collection, document, or query
 
 ### Configuration
 
