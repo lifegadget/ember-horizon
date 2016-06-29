@@ -79,28 +79,28 @@ The Horizon service has a number of useful public interfaces you can leverage; h
 - `authEndpoint` - returns the URL for authentication against the last configured OAuth endpoint
 
 
-#### Connections
+#### Database Operations
 
 In most cases this will be done for you transparently but if you ever need them you can use:
 
 - `connect` - establish connection with Horizon server; this is done automatically the first time you try and do any CRUD operation with the backend.
 - `disconnect` - does what is says on the tin
-
-#### Watching
-
 - `watch()` - allows you to setup a _changestream_ to a collection, document, or query
+- `collection()`, `find()`, `findAll()`, `findMany()`, `store()`, `remove()`, and `fetch()`
 
 ### Configuration
 
-config/environment.js
+Example Configuration:
+
+> config/environment.js
 
 ```js
     var ENV = {
     // ...
         horizon: {
-          host: 'localhost:8181' // where is server
+          host: 'localhost:8181' // where is horizon server found?
           authType: 'anonymous'  // how do we authorize?
-          realTime: ['foo', 'bar'], // what collections should be real-time (boolean or array)
+          realTime: ['foo', 'bar'], // what collections should be real-time (boolean or array)?
 
           // Any other config options: http://horizon.io/api/horizon/#constructor
         }
