@@ -1,7 +1,7 @@
-# ember-cli-horizon
+# ember-horizon
 
-[![npm](https://img.shields.io/npm/v/ember-cli-horizon.svg)](https://www.npmjs.com/package/ember-cli-horizon)
-[![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/jonesetc/ember-cli-horizon/master/LICENSE.md)
+[![npm](https://img.shields.io/npm/v/ember-horizon.svg)](https://www.npmjs.com/package/ember-horizon)
+[![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/jonesetc/ember-horizon/master/LICENSE.md)
 
 An Ember service for managing a Horizon connection, and an adapter to request data from that connection.
 
@@ -12,7 +12,7 @@ An Ember service for managing a Horizon connection, and an adapter to request da
 The first step is to get the Ember addon installed:
 
 ```sh
-ember install ember-cli-horizon
+ember install ember-horizon
 ```
 
 ### Horizon Server
@@ -54,7 +54,7 @@ ember generate adapter foo
 The adapter file specifics will be output by the CLI and will vary based on whether you're using _pod-style_ or not. Regardless, the next step will be to edit the generated adapter file. You'll want to replace the file contents with the following:
 
 ```js
-export { default } from 'ember-cli-horizon/adapters/horizon';
+export { default } from 'ember-horizon/adapters/horizon';
 ```
 
 Ok, you're done with the configuring the adapter.

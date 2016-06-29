@@ -1,1 +1,1 @@
-export { default } from 'ember-cli-horizon/utils/workflow';
+export { default } from 'ember-horizon/utils/workflow';

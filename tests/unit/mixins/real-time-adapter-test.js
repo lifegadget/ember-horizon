@@ -1,5 +1,5 @@
 import Ember from 'ember';
-import RealTimeAdapterMixin from 'ember-cli-horizon/mixins/real-time-adapter';
+import RealTimeAdapterMixin from 'ember-horizon/mixins/real-time-adapter';
 import { module, test } from 'qunit';
 
 module('Unit | Mixin | real time adapter');

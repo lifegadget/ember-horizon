@@ -4,7 +4,7 @@
 var commands = require('./lib/commands');
 
 module.exports = {
-  name: 'ember-cli-horizon',
+  name: 'ember-horizon',
   includedCommands() {
     return commands;
   },

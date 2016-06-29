@@ -1,5 +1,5 @@
 import Ember from 'ember';
-import WatchingMixin from 'ember-cli-horizon/mixins/watching';
+import WatchingMixin from 'ember-horizon/mixins/watching';
 import { module, test } from 'qunit';
 
 module('Unit | Mixin | watching');

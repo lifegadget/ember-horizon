@@ -1,1 +1,1 @@
-export { default } from 'ember-cli-horizon/utils/logger';
+export { default } from 'ember-horizon/utils/logger';
