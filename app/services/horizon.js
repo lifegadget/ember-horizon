@@ -1,1 +1,1 @@
-export { default } from 'ember-cli-horizon/services/horizon';
+export { default } from 'ember-horizon/services/horizon';

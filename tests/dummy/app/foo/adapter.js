@@ -1,1 +1,1 @@
-export { default } from 'ember-cli-horizon/adapters/horizon-fetch';
+export { default } from 'ember-horizon/adapters/horizon-fetch';

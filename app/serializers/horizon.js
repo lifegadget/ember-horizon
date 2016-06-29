@@ -1,1 +1,1 @@
-export { default } from 'ember-cli-horizon/serializers/horizon';
+export { default } from 'ember-horizon/serializers/horizon';

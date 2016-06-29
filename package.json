@@ -1,6 +1,6 @@
 {
-  "name": "ember-cli-horizon",
-  "version": "0.0.2",
+  "name": "ember-horizon",
+  "version": "0.1.1",
   "description": "An Ember service for managing a Horizon connection, and an adapter to request data from that connection.",
   "directories": {
     "doc": "doc",
@@ -13,7 +13,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/jonesetc/ember-cli-horizon.git"
+    "url": "https://github.com/jonesetc/ember-horizon.git"
   },
   "engines": {
     "node": ">= 0.10.0"
@@ -60,7 +60,7 @@
     "ember-route-action-helper": "^0.3.1",
     "ember-try": "^0.2.2",
     "loader.js": "^4.0.1",
-    "ui-bootstrap": "0.1.1",
+    "ui-bootstrap": "0.1.2",
     "ui-icon": "0.10.4",
     "ui-markdown": "0.1.7",
     "ui-navigator-service": "0.3.1"
