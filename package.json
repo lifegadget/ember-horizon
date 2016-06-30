@@ -1,7 +1,7 @@
 {
   "name": "ember-horizon",
-  "version": "0.1.1",
-  "description": "An Ember service for managing a Horizon connection, and an adapter to request data from that connection.",
+  "version": "0.1.2",
+  "description": "An Ember service for managing a Horizon connection and an adapter to request data from that connection.",
   "directories": {
     "doc": "doc",
     "test": "tests"
@@ -32,7 +32,7 @@
     "testem.json",
     "vendor"
   ],
-  "author": "Kyle Jones <kyle@jonesetc.com>",
+  "author": "Ken Snyder <ken@ken.net>",
   "license": "MIT",
   "devDependencies": {
     "bootstrap": "4.0.0-alpha.2",
