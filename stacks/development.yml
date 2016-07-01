@@ -1,0 +1,5 @@
+# Development Stack
+---
+build:
+  context: ./dir
+  
