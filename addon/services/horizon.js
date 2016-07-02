@@ -4,7 +4,9 @@ import workflow from '../utils/workflow';
 import Watching from '../mixins/watching';
 
 const { RSVP: {Promise}, computed, debug, get, typeOf, $, assert } = Ember;
-const hzConfig = get(config, 'horizon') || {};
+const hzConfig = get(config, 'horizon') || {
+  host: 'http://localhost:8181'
+};
 let hz;
 if(window.Horizon) {
   hz = window.Horizon(hzConfig);
