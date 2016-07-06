@@ -1,0 +1,40 @@
+version: '2'
+services:
+  # visualizer:
+  #   image: manomarks/visualizer
+  #   ports:
+  #     - '8080:8080'
+  #   volumes:
+  #     - '/var/run/docker.sock:/var/run/docker.sock'
+  #   environment:
+  #     HOST: 'localhost'
+  db:
+    image: rethinkdb:latest
+    volumes:
+      - "$PWD:/data"
+    restart: always
+    environment:
+      FOO: bar
+
+  horizon:
+    image: local.horizon:dev
+    depends_on:
+      - db
+    volumes:
+      - "$PWD:/horizon"
+      - "$PWD/static:/static"
+    environment:
+      HZ_DEV: 'yes'
+
+  versions:
+    image: ember-cli
+    command: ['ember', 'version']
+
+  ember:
+    image: ember-cli
+    command: ['ember', 'serve']
+    volumes:
+      - "$PWD:/app"
+    ports:
+      - "4200:4200"
+      - "49152"
