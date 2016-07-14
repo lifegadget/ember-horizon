@@ -8,33 +8,72 @@ services:
   #     - '/var/run/docker.sock:/var/run/docker.sock'
   #   environment:
   #     HOST: 'localhost'
+  registrator:
+    image: gliderlabs/registrator:latest
+    command: consul://consul:8500
+    depends_on:
+      - consul
+    networks:
+      - discovery
+      - app
+    volumes:
+      - "/var/run/docker.sock:/tmp/docker.sock"
+
+  consul:
+    image: consul:latest
+    networks:
+      - discovery
+      - app
+    # command: -server -bootstrap -advertise 10.0.2.15
+    # command: -server -bootstrap
+    ports:
+      - "8300:8300"
+      - "8400:8400"
+      - "8500:8500"
+      - "8600:53/udp"
+
   db:
     image: rethinkdb:latest
     volumes:
       - "$PWD:/data"
     restart: always
+    networks:
+      - app
     environment:
       FOO: bar
 
   horizon:
-    image: local.horizon:dev
+    image: local.horizon
     depends_on:
       - db
     volumes:
       - "$PWD:/horizon"
       - "$PWD/static:/static"
+    networks:
+      - app
     environment:
-      HZ_DEV: 'yes'
+      HZ_DEV: "--dev"
+      DB_PORT: 29015
 
   versions:
-    image: ember-cli
-    command: ['ember', 'version']
+    image: lifegadget/ember-cli:latest-phantom-1
+    command: ['ember', 'version', '-v']
 
   ember:
-    image: ember-cli
+    image: lifegadget/ember-cli:latest-phantom-1
     command: ['ember', 'serve']
     volumes:
       - "$PWD:/app"
+    networks:
+      - app
     ports:
       - "4200:4200"
       - "49152"
+
+networks:
+  discovery:
+    driver: bridge
+  app:
+    driver: bridge
+  # db:
+  #   driver: overlay
