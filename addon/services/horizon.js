@@ -4,14 +4,18 @@ import workflow from '../utils/workflow';
 import Watching from '../mixins/watching';
 
 const { RSVP: {Promise}, computed, debug, get, typeOf, $, assert } = Ember;
-const hzConfig = get(config, 'horizon') || {
-  host: 'http://localhost:8181'
-};
+const hzConfig = Ember.assign({ host: 'http://localhost:8181' }, get(config, 'horizon') || {});
 let hz;
 if(window.Horizon) {
   hz = window.Horizon(hzConfig);
 } else {
   console.warn('Horizon client library wasn\'t available. Please be sure that the Horizon server is running.');
+}
+
+const makeArray = function(hash) {
+  return Object.keys(hash).map(i => {
+    return { id: i, url: hash[i] };
+  });
 }
 
 /**
@@ -20,10 +24,13 @@ if(window.Horizon) {
  * Service methods for interacting with Horizon
  */
 export default Ember.Service.extend(Watching, {
+  ajax: Ember.inject.service(),
   // Observable members
-  currentUser: null,    // set by Horizon Observable
+  currentUser: computed('isLoggedIn', function() {
+    return hz.currentUser();
+  }).volatile(),
   status: 'unconnected',// set by Horizon Observable
-  hasAuthToken: null,   // set by Horizon Observable
+  hasAuthToken: computed.alias('isLoggedIn'),   // set by Horizon Observable
   raw: true,            // specifies detail/structure in watched changes (true = RethinkDB changestream)
 
   willDestroy() {
@@ -46,6 +53,7 @@ export default Ember.Service.extend(Watching, {
             hz.onReady(() => {
               this.set('status', 'ready');
               debug('Horizon connected');
+              this.listenForCurrentUser();
               resolve();
             });
             hz.onDisconnected(() => {
@@ -73,9 +81,56 @@ export default Ember.Service.extend(Watching, {
     }); // return promise
   },
 
+  listenForCurrentUser() {
+    hz.currentUser().fetch().subscribe( user => {
+      this.set('currentUser', user);
+    });
+  },
+
   disconnect() {
     debug('Disconnecting from Horizon server');
-    hz.disconnect();
+    this.logout();
+  },
+
+  /**
+   * Returns a list of Authentication services which are configured for the Horizon Server
+   */
+  getAuthServices() {
+    return get(this, 'ajax').request(`${this.horizonServerURI()}/horizon/auth_methods`);
+  },
+
+
+  /**
+   * Given a service name (e.g, 'facebook', 'google'), it will force browser to authenticate
+   * against the indicated service. If you are embedding into an iFrame then you must
+   * the DOM element which is your iFrame
+   */
+  authenticate(service, domElement = null) {
+    if(domElement) {
+      // TODO: implement
+    } else {
+      // console.log(service);
+      // hz.authEndpoint(service).subscribe(endpoint => {
+      //   console.log('endpoint is: ', endpoint);
+      //   window.location.replace(endpoint);
+      // });
+
+      this.getAuthServices()
+        .then(services => {
+          const authUrl = makeArray(services).filter(s => s.id = service)[0].url;
+          console.log(`${this.horizonServerURI()}${authUrl}`);
+          window.location.replace(`${this.horizonServerURI()}${authUrl}`);
+        });
+    }
+  },
+
+  /**
+   * Logs out the current user
+   */
+  logout() {
+    // TODO: the below command is the RIGHT way to do this
+    // hz.clearAuthTokens();
+    window.localStorage.removeItem('horizon-jwt');
   },
 
   /**
@@ -136,9 +191,14 @@ export default Ember.Service.extend(Watching, {
     return hz.hasAuthToken();
   }).volatile(),
 
-  authEndpoint: computed(function() {
-    return hz.authEndpoint();
-  }).volatile(),
+  authEndpoint() {
+    return hz.authEndpoint(...arguments);
+  },
+
+  horizonServerURI() {
+    const protocol = hzConfig.secure ? 'https://' : 'http://';
+    return protocol + hzConfig.host;
+  },
 
   /**
    * Allows the execution of a Collection.find primative,

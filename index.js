@@ -11,11 +11,12 @@ module.exports = {
   contentFor: function(type, config) {
     // Horizon Client Library
     if (type === 'head') {
-      var horizonConfig = Object.assign(_.get(config, 'horizon', {}), {
+      var horizonConfig = Object.assign({
         host: 'localhost:8181',
-        authType: 'anonymous'
-      });
-      var protocol = horizonConfig.host.match(/(localhost|127.0.0.1)/) ? 'http://' : 'https://';
+        authType: 'anonymous',
+        secure: false
+      }, _.get(config, 'horizon', {}));
+      var protocol = horizonConfig.secure ? 'https://' : 'http';
       return '<script id="client-driver" src="' + protocol + horizonConfig.host + '/horizon/horizon.js"></script>';
     }
   }
