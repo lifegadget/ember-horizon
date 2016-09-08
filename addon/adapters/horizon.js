@@ -7,7 +7,7 @@ const { RSVP: {Promise}, debug, get, inject: {service}, typeOf, assert } = Ember
 
 /**
  * @class HorizonFetchAdapter
- *
+ * 
  * This adapter integrates with a Horizon/RethinkDB stack; it provides
  * normal CRUD operations by default and can provide real-time updates
  * if the application chooses to use the services "watch" services for one,
