@@ -1,6 +1,6 @@
 {
   "name": "ember-horizon",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "An Ember service for managing a Horizon connection and an adapter to request data from that connection.",
   "directories": {
     "doc": "doc",
