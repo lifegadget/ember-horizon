@@ -187,8 +187,8 @@ export default Ember.Service.extend(Watching, {
     }); // return promise
   },
 
-  isLoggedIn: computed(function() {
-    return hz.hasAuthToken();
+  isLoggedIn: computed('hz', function() {
+    return hz && hz.hasAuthToken();
   }).volatile(),
 
   authEndpoint() {
