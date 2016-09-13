@@ -1,6 +1,6 @@
 {
   "name": "ember-horizon",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "An Ember service for managing a Horizon connection and an adapter to request data from that connection.",
   "directories": {
     "doc": "doc",
@@ -60,6 +60,7 @@
     "ember-route-action-helper": "^0.3.1",
     "ember-try": "^0.2.2",
     "loader.js": "^4.0.1",
+    "lodash": "^4.15.0",
     "ui-bootstrap": "0.1.2",
     "ui-icon": "0.10.4",
     "ui-markdown": "0.1.7",

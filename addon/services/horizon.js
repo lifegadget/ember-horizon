@@ -92,45 +92,48 @@ export default Ember.Service.extend(Watching, {
     this.logout();
   },
 
-  /**
-   * Returns a list of Authentication services which are configured for the Horizon Server
-   */
-  getAuthServices() {
-    return get(this, 'ajax').request(`${this.horizonServerURI()}/horizon/auth_methods`);
-  },
+    /**
+     * Returns a list of Authentication services which are configured for the Horizon Server
+     */
+    getAuthServices() {
+      return get(this, 'ajax').request(`${this.horizonServerURI()}/horizon/auth_methods`);
+    },
 
 
-  /**
-   * Given a service name (e.g, 'facebook', 'google'), it will force browser to authenticate
-   * against the indicated service. If you are embedding into an iFrame then you must
-   * the DOM element which is your iFrame
-   */
-  authenticate(service, domElement = null) {
-    if(domElement) {
-      // TODO: implement
-    } else {
-      // console.log(service);
-      // hz.authEndpoint(service).subscribe(endpoint => {
-      //   console.log('endpoint is: ', endpoint);
-      //   window.location.replace(endpoint);
-      // });
+    /**
+     * Given a service name (e.g, 'facebook', 'google'), it will force browser to authenticate
+     * against the indicated service. If you are embedding into an iFrame then you must
+     * the DOM element which is your iFrame
+     */
+    authenticate(service, domElement = null) {
+      if(domElement) {
+        // TODO: implement
+      } else {
+        // TODO: this has a known CORs issue with it at the moment
+        // hz.authEndpoint(service).subscribe(endpoint => {
+        //   window.location.replace(endpoint);
+        // });
 
-      this.getAuthServices()
-        .then(services => {
-          const authUrl = makeArray(services).filter(s => s.id = service)[0].url;
-          console.log(`${this.horizonServerURI()}${authUrl}`);
-          window.location.replace(`${this.horizonServerURI()}${authUrl}`);
-        });
-    }
-  },
+        this.getAuthServices()
+          .then(services => {
+            const authUrl = makeArray(services).filter(s => s.id === service)[0].url;
+            console.log(`${this.horizonServerURI()}${authUrl}`);
+            window.location.replace(`${this.horizonServerURI()}${authUrl}`);
+          });
+      }
+    },
 
   /**
    * Logs out the current user
    */
   logout() {
     // TODO: the below command is the RIGHT way to do this
-    // hz.clearAuthTokens();
-    window.localStorage.removeItem('horizon-jwt');
+    if(window.Horizon) {
+      window.Horizon.clearAuthTokens();
+    } else {
+      debug(`couldn't find horizon client library; manually removed token from local storage`);
+      window.localStorage.removeItem('horizon-jwt');
+    }
   },
 
   /**

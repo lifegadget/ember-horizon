@@ -14,7 +14,8 @@ module.exports = {
       var horizonConfig = Object.assign({
         host: 'localhost:8181',
         authType: 'anonymous',
-        secure: false
+        secure: false,
+        realTime: true
       }, _.get(config, 'horizon', {}));
       var protocol = horizonConfig.secure ? 'https://' : 'http';
       return '<script id="client-driver" src="' + protocol + horizonConfig.host + '/horizon/horizon.js"></script>';
