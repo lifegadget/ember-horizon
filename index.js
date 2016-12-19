@@ -17,7 +17,7 @@ module.exports = {
         secure: false,
         realTime: true
       }, _.get(config, 'horizon', {}));
-      var protocol = horizonConfig.secure ? 'https://' : 'http';
+      var protocol = horizonConfig.secure ? 'https://' : 'http://';
       return '<script id="client-driver" src="' + protocol + horizonConfig.host + '/horizon/horizon.js"></script>';
     }
   }
